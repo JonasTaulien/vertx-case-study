@@ -1,0 +1,14 @@
+version: '3.1'
+
+services:
+    db:
+        image: postgres:11-alpine
+        restart: always
+        ports:
+            - "5432:5432"
+        volumes:
+            - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+        environment:
+            POSTGRES_USER: example
+            POSTGRES_PASSWORD: example
+            POSTGRES_DB: case-study
