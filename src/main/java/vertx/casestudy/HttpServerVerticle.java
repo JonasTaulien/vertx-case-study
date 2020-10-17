@@ -1,5 +1,6 @@
 package vertx.casestudy;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -10,10 +11,16 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
+    private final Logger log = LoggerFactory.getLogger(HttpServerVerticle.class);
+
     private final PgPool pgPool;
+
+    private final Responder responder;
 
     private final HeadlineCreateHandler headlineCreateHandler;
 
@@ -33,8 +40,10 @@ public class HttpServerVerticle extends AbstractVerticle {
             new PoolOptions()
         );
 
-        this.headlineCreateHandler = new HeadlineCreateHandler(this.pgPool);
-        this.headlineGetAllHandler = new HeadlineGetAllHandler(this.pgPool);
+        this.responder = new Responder();
+
+        this.headlineCreateHandler = new HeadlineCreateHandler(this.pgPool, responder);
+        this.headlineGetAllHandler = new HeadlineGetAllHandler(this.pgPool, responder);
     }
 
 
@@ -45,7 +54,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         router.route()
               .handler(BodyHandler.create())
               .handler(ctx -> {
-                  System.out.println("New Request: " + ctx.request().path());
+                  log.info("New Request {}", ctx.request().path());
                   ctx.next();
               });
 
@@ -58,9 +67,12 @@ public class HttpServerVerticle extends AbstractVerticle {
 
         router.route()
               .failureHandler(ctx -> {
-                  ctx.response()
-                     .setStatusCode(500)
-                     .end(new JsonObject().put("error", ctx.failure().toString()).encodePrettily());
+                  this.responder
+                      .respond(
+                          ctx,
+                          HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                          new JsonObject().put("error", ctx.failure().toString())
+                      );
               });
 
         this.vertx.createHttpServer(new HttpServerOptions())

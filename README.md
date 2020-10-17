@@ -10,3 +10,10 @@
     ```sh
     ./gradlew run
     ```
+
+## Test
+0. Execute integration tests
+
+    ```sh
+    ./gradlew test
+    ```

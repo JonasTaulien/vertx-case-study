@@ -1,8 +1,14 @@
 package vertx.casestudy;
 
 import io.vertx.core.Vertx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
+
+    private static final Logger log = LoggerFactory.getLogger(HttpServerVerticle.class);
+
+
 
     public static void main(String[] args) {
         final var vertx = Vertx.vertx();
@@ -11,9 +17,9 @@ public class Main {
             new HttpServerVerticle(vertx),
             future -> {
                 if (future.succeeded()) {
-                    System.out.println("Successfully started server");
+                    Main.log.info("Successfully started server");
                 } else {
-                    System.out.println("Failed to start server");
+                    Main.log.info("Failed to start server");
                 }
             }
         );

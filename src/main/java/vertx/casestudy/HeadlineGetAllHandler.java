@@ -1,5 +1,8 @@
 package vertx.casestudy;
 
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -21,10 +24,13 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
 
     private final PgPool pgPool;
 
+    private final Responder responder;
 
 
-    public HeadlineGetAllHandler(PgPool pgPool) {
+
+    public HeadlineGetAllHandler(PgPool pgPool, Responder responder) {
         this.pgPool = pgPool;
+        this.responder = responder;
     }
 
 
@@ -43,13 +49,16 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
             if (ar.succeeded()) {
                 final var headlines = HeadlineGetAllHandler.convertRowsIntoJsonObjects(ar);
 
-                ctx.response()
-                   .end(new JsonArray(headlines).encodePrettily());
+                this.responder
+                    .respond(ctx, HttpResponseStatus.OK, new JsonArray(headlines));
 
             } else {
-                ctx.response()
-                   .setStatusCode(500)
-                   .end(new JsonObject().put("error", ar.cause().toString()).encodePrettily());
+                this.responder
+                    .respond(
+                        ctx,
+                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                        new JsonObject().put("error", ar.cause().toString())
+                    );
             }
         } catch (Throwable t) {
             ctx.fail(t);
