@@ -7,7 +7,11 @@ repositories {
 }
 
 dependencies {
+    val vertxVersion = "3.9.3"
 
+    implementation("io.vertx:vertx-core:${vertxVersion}")
+    implementation("io.vertx:vertx-web:${vertxVersion}")
+    implementation("io.vertx:vertx-pg-client:${vertxVersion}")
 }
 
 java {
