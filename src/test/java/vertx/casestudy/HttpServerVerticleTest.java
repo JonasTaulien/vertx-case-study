@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
@@ -41,14 +42,14 @@ public class HttpServerVerticleTest {
             .put("source", "sz.de")
             .put("title", "Trump verliert US Wahl")
             .put("description", "Die Republikaner weinen, die Welt lacht")
-            .put("publishedAt", OffsetDateTime.now().toString()),
+            .put("publishedAt", OffsetDateTime.of(2020, 11, 10, 8, 20, 0, 0, ZoneOffset.UTC).toString()),
 
         new JsonObject()
             .put("author", "Mia Mustermann")
             .put("source", "bild.de")
             .put("title", "Corona ist vorbei")
             .put("description", "Wir haben es geschafft!")
-            .put("publishedAt", OffsetDateTime.now().toString())
+            .put("publishedAt", OffsetDateTime.of(2020, 12, 10, 1, 14, 0, 0, ZoneOffset.UTC).toString())
     );
 
 
@@ -135,5 +136,38 @@ public class HttpServerVerticleTest {
         final var bodyAsJson = new JsonArray(body.asString());
 
         assertThat(bodyAsJson.size()).isEqualTo(HttpServerVerticleTest.headlines.size());
+    }
+
+
+
+    @Test
+    void getOneHeadline() {
+        final var headline = HttpServerVerticleTest.headlines.get(0);
+
+        final var idOfCreatedHeadline
+            = given(HttpServerVerticleTest.requestSpecification)
+                  .contentType(ContentType.JSON)
+                  .body(headline.encode())
+                  .post("/headline")
+                  .then()
+                  .assertThat()
+                  .statusCode(201)
+                  .extract()
+                  .body()
+                  .jsonPath()
+                  .getInt("id");
+
+        final var body = given(HttpServerVerticleTest.requestSpecification)
+                             .get("/headline/" + idOfCreatedHeadline)
+                             .then()
+                             .assertThat()
+                             .statusCode(200)
+                             .contentType("application/json")
+                             .extract()
+                             .body();
+
+        final var bodyAsJson = new JsonObject(body.asString());
+
+        assertThat(bodyAsJson).isEqualTo(headline.put("id", 1));
     }
 }

@@ -66,10 +66,10 @@ public class HeadlineCreateHandler implements Handler<RoutingContext> {
 
             } else {
                 this.responder
-                    .respond(
+                    .respondError(
                         ctx,
                         HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                        new JsonObject().put("error", ar.cause().toString())
+                        ar.cause()
                     );
             }
         } catch (Throwable t) {

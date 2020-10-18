@@ -3,21 +3,17 @@ package vertx.casestudy;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
-import vertx.casestudy.util.StreamHelper;
+import io.vertx.sqlclient.Tuple;
 
-import java.util.List;
-import java.util.stream.Collectors;
+public class HeadlineGetOneHandler implements Handler<RoutingContext> {
 
-public class HeadlineGetAllHandler implements Handler<RoutingContext> {
-
-    private static final String SELECT_ALL_HEADLINES_QUERY
-        = "SELECT id, source, author, title, description, published_at FROM headline";
+    private static final String SELECT_ONE_HEADLINE_QUERY
+        = "SELECT id, source, author, title, description, published_at FROM headline WHERE headline.id = $1";
 
     private final PgPool pgPool;
 
@@ -25,7 +21,7 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
 
 
 
-    public HeadlineGetAllHandler(PgPool pgPool, Responder responder) {
+    public HeadlineGetOneHandler(PgPool pgPool, Responder responder) {
         this.pgPool = pgPool;
         this.responder = responder;
     }
@@ -34,9 +30,10 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext ctx) {
+        final var headlineId = Integer.parseInt(ctx.pathParam("id"));
         this.pgPool
-            .query(SELECT_ALL_HEADLINES_QUERY)
-            .execute(ar -> respond(ctx, ar));
+            .preparedQuery(SELECT_ONE_HEADLINE_QUERY)
+            .execute(Tuple.of(headlineId), ar -> respond(ctx, ar));
     }
 
 
@@ -44,10 +41,14 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
     private void respond(RoutingContext ctx, AsyncResult<RowSet<Row>> ar) {
         try {
             if (ar.succeeded()) {
-                final var headlines = HeadlineGetAllHandler.convertRowsIntoJsonObjects(ar);
+                final var row = ar.result().iterator().next();
 
                 this.responder
-                    .respond(ctx, HttpResponseStatus.OK, new JsonArray(headlines));
+                    .respond(
+                        ctx,
+                        HttpResponseStatus.OK,
+                        HeadlineGetOneHandler.rowToJson(row)
+                    );
 
             } else {
                 this.responder
@@ -60,14 +61,6 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
         } catch (Throwable t) {
             ctx.fail(t);
         }
-    }
-
-
-
-    private static List<JsonObject> convertRowsIntoJsonObjects(AsyncResult<RowSet<Row>> ar) {
-        return StreamHelper.streamFromIterator(ar.result().iterator())
-                           .map(HeadlineGetAllHandler::rowToJson)
-                           .collect(Collectors.toList());
     }
 
 

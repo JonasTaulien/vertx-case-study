@@ -5,7 +5,6 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.pgclient.PgConnectOptions;
@@ -26,6 +25,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private final HeadlineGetAllHandler headlineGetAllHandler;
 
+    private final HeadlineGetOneHandler headlineGetOneHandler;
+
 
 
     public HttpServerVerticle(Vertx vertx) {
@@ -44,6 +45,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
         this.headlineCreateHandler = new HeadlineCreateHandler(this.pgPool, responder);
         this.headlineGetAllHandler = new HeadlineGetAllHandler(this.pgPool, responder);
+        this.headlineGetOneHandler = new HeadlineGetOneHandler(this.pgPool, responder);
     }
 
 
@@ -61,19 +63,21 @@ public class HttpServerVerticle extends AbstractVerticle {
         router.post("/headline")
               .handler(this.headlineCreateHandler);
 
-
         router.get("/headlines")
               .handler(this.headlineGetAllHandler);
 
+        router.get("/headline/:id")
+              .handler(this.headlineGetOneHandler);
+
         router.route()
-              .failureHandler(ctx -> {
-                  this.responder
-                      .respond(
-                          ctx,
-                          HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                          new JsonObject().put("error", ctx.failure().toString())
-                      );
-              });
+              .failureHandler(
+                  ctx -> this.responder
+                             .respondError(
+                                 ctx,
+                                 HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                 ctx.failure()
+                             )
+              );
 
         this.vertx.createHttpServer(new HttpServerOptions())
                   .requestHandler(router)
