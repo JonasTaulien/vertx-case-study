@@ -34,13 +34,19 @@ public class HeadlineDataStoreVerticle extends AbstractVerticle {
 
     @Override
     public Completable rxStart() {
-        vertx.eventBus()
-             .consumer("headline.create", this::createHeadline);
+        final var headlineCreate = vertx.eventBus()
+                                        .consumer("headline.create", this::createHeadline)
+                                        .rxCompletionHandler();
 
-        vertx.eventBus()
-             .consumer("headline.getAll", this::getAllHeadlines);
+        final var headlineGetAll = vertx.eventBus()
+                                        .consumer("headline.getAll", this::getAllHeadlines)
+                                        .rxCompletionHandler();
 
-        return Completable.complete();
+        final var headlineGetOne = vertx.eventBus()
+                                        .consumer("headline.getOne", this::getOneHeadline)
+                                        .rxCompletionHandler();
+
+        return Completable.concatArray(headlineCreate, headlineGetAll, headlineGetOne);
     }
 
 
@@ -87,6 +93,27 @@ public class HeadlineDataStoreVerticle extends AbstractVerticle {
             .toList()
             .subscribe(
                 headlines -> message.reply(new JsonObject().put("result", new JsonArray(headlines))),
+                this.replyWithError(message)
+            );
+    }
+
+
+
+    private static final String SELECT_ONE_HEADLINE_QUERY
+        = "SELECT id, source, author, title, description, published_at FROM headline WHERE headline.id = $1";
+
+
+
+    private void getOneHeadline(Message<JsonObject> message) {
+        final var body = message.body();
+
+        this.pgPool
+            .preparedQuery(SELECT_ONE_HEADLINE_QUERY)
+            .rxExecute(Tuple.of(body.getInteger("id")))
+            .map(resultSet -> resultSet.iterator().next())
+            .map(HeadlineDataStoreVerticle::rowToJson)
+            .subscribe(
+                message::reply,
                 this.replyWithError(message)
             );
     }

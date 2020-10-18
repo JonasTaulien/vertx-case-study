@@ -21,8 +21,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private final Responder responder;
 
-    private final HeadlineGetOneHandler headlineGetOneHandler;
-
     private final LoginHandler loginHandler;
 
     private final JWTAuthHandler jwtAuthHandler;
@@ -34,13 +32,11 @@ public class HttpServerVerticle extends AbstractVerticle {
     @Inject
     public HttpServerVerticle(
         Responder responder,
-        HeadlineGetOneHandler headlineGetOneHandler,
         LoginHandler loginHandler,
         JWTAuthHandler jwtAuthHandler,
         JsonObject config
     ) {
         this.responder = responder;
-        this.headlineGetOneHandler = headlineGetOneHandler;
         this.loginHandler = loginHandler;
         this.jwtAuthHandler = jwtAuthHandler;
         this.config = config;
@@ -67,7 +63,7 @@ public class HttpServerVerticle extends AbstractVerticle {
               .handler(this::getAllHeadlines);
 
         router.get("/headline/:id")
-              .handler(this.headlineGetOneHandler);
+              .handler(this::getOneHeadline);
 
         router.post("/login")
               .handler(this.loginHandler);
@@ -115,6 +111,21 @@ public class HttpServerVerticle extends AbstractVerticle {
             .flatMap(this::mapFailedMessageToException)
             .subscribe(
                 msg -> this.responder.respond(ctx, HttpResponseStatus.OK, msg.body().getJsonArray("result")),
+                ctx::fail
+            );
+    }
+
+
+
+    public void getOneHeadline(RoutingContext ctx) {
+        final var headlineId = Integer.parseInt(ctx.pathParam("id"));
+
+        ctx.vertx()
+           .eventBus()
+            .<JsonObject>rxRequest("headline.getOne", new JsonObject().put("id", headlineId))
+            .flatMap(this::mapFailedMessageToException)
+            .subscribe(
+                msg -> this.responder.respond(ctx, HttpResponseStatus.OK, msg.body()),
                 ctx::fail
             );
     }
