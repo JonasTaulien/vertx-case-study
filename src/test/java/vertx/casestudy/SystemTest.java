@@ -6,11 +6,11 @@ import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Tuple;
@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 @ExtendWith(VertxExtension.class)
-public class HttpServerVerticleTest {
+public class SystemTest {
 
     private RequestSpecification requestSpecification;
 
@@ -83,6 +83,10 @@ public class HttpServerVerticleTest {
                                   .rxExecute(Tuple.of(USER_EMAIL, USER_PASSWORD))
               )
               .flatMap(rowSet -> vertx.rxDeployVerticle(httpServerVerticle))
+              .flatMap(rowSet -> vertx.rxDeployVerticle(
+                  () -> injector.getInstance(HeadlineDataStoreVerticle.class),
+                  new DeploymentOptions().setInstances(3))
+              )
               .subscribe(
                   id -> ctx.completeNow(),
                   ctx::failNow
@@ -106,7 +110,7 @@ public class HttpServerVerticleTest {
 
     @Test
     void creatingHeadline() {
-        final var headline = HttpServerVerticleTest.headlines.get(0);
+        final var headline = SystemTest.headlines.get(0);
 
         final var body = given(this.requestSpecification)
                              .contentType(ContentType.JSON)
@@ -131,7 +135,7 @@ public class HttpServerVerticleTest {
     @Test
     void getHeadlines() {
         final var jwt = getJwt();
-        HttpServerVerticleTest.headlines.forEach(
+        SystemTest.headlines.forEach(
             headline -> given(this.requestSpecification)
                             .header("Authorization", "Bearer " + jwt)
                             .contentType(ContentType.JSON)
@@ -154,14 +158,14 @@ public class HttpServerVerticleTest {
 
         final var bodyAsJson = new JsonArray(body);
 
-        assertThat(bodyAsJson.size()).isEqualTo(HttpServerVerticleTest.headlines.size());
+        assertThat(bodyAsJson.size()).isEqualTo(SystemTest.headlines.size());
     }
 
 
 
     @Test
     void getOneHeadline() {
-        final var headline = HttpServerVerticleTest.headlines.get(0);
+        final var headline = SystemTest.headlines.get(0);
 
         final var idOfCreatedHeadline
             = given(this.requestSpecification)

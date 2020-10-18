@@ -3,11 +3,13 @@ package vertx.casestudy;
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.Completable;
+import io.reactivex.Single;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import io.vertx.reactivex.ext.web.handler.JWTAuthHandler;
 import org.slf4j.Logger;
@@ -18,10 +20,6 @@ public class HttpServerVerticle extends AbstractVerticle {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final Responder responder;
-
-    private final HeadlineCreateHandler headlineCreateHandler;
-
-    private final HeadlineGetAllHandler headlineGetAllHandler;
 
     private final HeadlineGetOneHandler headlineGetOneHandler;
 
@@ -36,17 +34,12 @@ public class HttpServerVerticle extends AbstractVerticle {
     @Inject
     public HttpServerVerticle(
         Responder responder,
-        HeadlineCreateHandler headlineCreateHandler,
-        HeadlineGetAllHandler headlineGetAllHandler,
         HeadlineGetOneHandler headlineGetOneHandler,
         LoginHandler loginHandler,
         JWTAuthHandler jwtAuthHandler,
-        ConfigRetriever configRetriever,
         JsonObject config
     ) {
         this.responder = responder;
-        this.headlineCreateHandler = headlineCreateHandler;
-        this.headlineGetAllHandler = headlineGetAllHandler;
         this.headlineGetOneHandler = headlineGetOneHandler;
         this.loginHandler = loginHandler;
         this.jwtAuthHandler = jwtAuthHandler;
@@ -68,10 +61,10 @@ public class HttpServerVerticle extends AbstractVerticle {
 
         router.post("/headline")
               .handler(this.jwtAuthHandler)
-              .handler(this.headlineCreateHandler);
+              .handler(this::createHeadline);
 
         router.get("/headlines")
-              .handler(this.headlineGetAllHandler);
+              .handler(this::getAllHeadlines);
 
         router.get("/headline/:id")
               .handler(this.headlineGetOneHandler);
@@ -94,5 +87,43 @@ public class HttpServerVerticle extends AbstractVerticle {
                    .requestHandler(router)
                    .rxListen(config.getInteger("port"))
                    .ignoreElement();
+    }
+
+
+
+    public void createHeadline(RoutingContext ctx) {
+        final var body = ctx.getBodyAsJson();
+
+        ctx.vertx()
+           .eventBus()
+            .<JsonObject>rxRequest("headline.create", body)
+            .flatMap(this::mapFailedMessageToException)
+            .subscribe(
+                msg -> this.responder.respond(ctx, HttpResponseStatus.CREATED, msg.body()),
+                ctx::fail
+            );
+    }
+
+
+
+    public void getAllHeadlines(RoutingContext ctx) {
+        final var body = ctx.getBodyAsJson();
+
+        ctx.vertx()
+           .eventBus()
+            .<JsonObject>rxRequest("headline.getAll", body)
+            .flatMap(this::mapFailedMessageToException)
+            .subscribe(
+                msg -> this.responder.respond(ctx, HttpResponseStatus.OK, msg.body().getJsonArray("result")),
+                ctx::fail
+            );
+    }
+
+
+
+    private Single<Message<JsonObject>> mapFailedMessageToException(Message<JsonObject> message) {
+        return message.headers().contains("FAILED")
+                   ? Single.error(new Exception(message.body().getString("error")))
+                   : Single.just(message);
     }
 }

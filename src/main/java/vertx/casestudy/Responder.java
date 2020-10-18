@@ -21,7 +21,7 @@ public class Responder {
         this.respond(
             ctx,
             statusCode,
-            new JsonObject().put("error", (t != null) ? t.toString() : "Unknown error")
+            new JsonObject().put("error", (t != null) ? t.getMessage() : "Unknown error")
         );
     }
 

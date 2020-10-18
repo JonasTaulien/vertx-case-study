@@ -71,7 +71,6 @@ public class GuiceModule extends AbstractModule {
 
 
     @Provides
-    @Singleton
     PgPool providePgPool(Vertx vertx, JsonObject config) {
         final var dbConfig = config.getJsonObject("db");
 
