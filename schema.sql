@@ -9,3 +9,10 @@ CREATE TABLE IF NOT EXISTS headline
     description  VARCHAR,
     published_at timestamptz
 );
+
+CREATE TABLE IF NOT EXISTS "user"
+(
+    id       SERIAL PRIMARY KEY,
+    email    VARCHAR,
+    password VARCHAR
+)

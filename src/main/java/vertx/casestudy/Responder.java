@@ -27,19 +27,34 @@ public class Responder {
 
 
 
+    public void respondError(RoutingContext ctx, HttpResponseStatus statusCode, String errorMessage) {
+        log.error("An error occurred: {}", errorMessage);
+
+        this.respond(
+            ctx,
+            statusCode,
+            new JsonObject().put("error", errorMessage)
+        );
+    }
+
+
+
     public void respond(RoutingContext ctx, HttpResponseStatus statusCode, JsonObject body) {
-        ctx.response()
-           .setStatusCode(statusCode.code())
-           .putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-           .end(body.encode());
+        this.respond(ctx, statusCode, HttpHeaderValues.APPLICATION_JSON, body.encode());
     }
 
 
 
     public void respond(RoutingContext ctx, HttpResponseStatus statusCode, JsonArray body) {
+        this.respond(ctx, statusCode, HttpHeaderValues.APPLICATION_JSON, body.encode());
+    }
+
+
+
+    public void respond(RoutingContext ctx, HttpResponseStatus statusCode, CharSequence contentType, String body) {
         ctx.response()
            .setStatusCode(statusCode.code())
-           .putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-           .end(body.encode());
+           .putHeader(HttpHeaderNames.CONTENT_TYPE, contentType)
+           .end(body);
     }
 }

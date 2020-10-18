@@ -65,12 +65,7 @@ public class HeadlineCreateHandler implements Handler<RoutingContext> {
                     .respond(ctx, HttpResponseStatus.CREATED, body.put("id", idOfCreatedHeadline));
 
             } else {
-                this.responder
-                    .respondError(
-                        ctx,
-                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                        ar.cause()
-                    );
+                ctx.fail(ar.cause());
             }
         } catch (Throwable t) {
             ctx.fail(t);

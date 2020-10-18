@@ -50,12 +50,7 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
                     .respond(ctx, HttpResponseStatus.OK, new JsonArray(headlines));
 
             } else {
-                this.responder
-                    .respondError(
-                        ctx,
-                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                        ar.cause()
-                    );
+                ctx.fail(ar.cause());
             }
         } catch (Throwable t) {
             ctx.fail(t);

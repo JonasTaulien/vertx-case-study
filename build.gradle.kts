@@ -13,6 +13,7 @@ dependencies {
     implementation("io.vertx:vertx-core:${vertxVersion}")
     implementation("io.vertx:vertx-web:${vertxVersion}")
     implementation("io.vertx:vertx-pg-client:${vertxVersion}")
+    implementation("io.vertx:vertx-auth-jwt:${vertxVersion}")
 
     // Misc
     implementation("ch.qos.logback:logback-classic:1.2.3")

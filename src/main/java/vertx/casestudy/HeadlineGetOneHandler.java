@@ -51,12 +51,7 @@ public class HeadlineGetOneHandler implements Handler<RoutingContext> {
                     );
 
             } else {
-                this.responder
-                    .respondError(
-                        ctx,
-                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                        ar.cause()
-                    );
+                ctx.fail(ar.cause());
             }
         } catch (Throwable t) {
             ctx.fail(t);
