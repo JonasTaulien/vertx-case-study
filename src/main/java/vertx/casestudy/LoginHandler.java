@@ -1,13 +1,14 @@
 package vertx.casestudy;
 
+import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
-import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.Tuple;
+import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.pgclient.PgPool;
+import io.vertx.reactivex.sqlclient.Tuple;
 
 public class LoginHandler implements Handler<RoutingContext> {
 
@@ -21,6 +22,7 @@ public class LoginHandler implements Handler<RoutingContext> {
 
 
 
+    @Inject
     public LoginHandler(PgPool pgPool, Responder responder, JWTAuth jwtAuth) {
         this.pgPool = pgPool;
         this.responder = responder;

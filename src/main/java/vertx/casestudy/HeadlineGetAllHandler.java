@@ -1,14 +1,15 @@
 package vertx.casestudy;
 
+import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.pgclient.PgPool;
+import io.vertx.reactivex.sqlclient.Row;
+import io.vertx.reactivex.sqlclient.RowSet;
 import vertx.casestudy.util.StreamHelper;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
 
 
 
+    @Inject
     public HeadlineGetAllHandler(PgPool pgPool, Responder responder) {
         this.pgPool = pgPool;
         this.responder = responder;

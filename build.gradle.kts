@@ -10,13 +10,18 @@ dependencies {
     val vertxVersion = "3.9.3"
     val junit5Version = "5.5.1"
 
-    implementation("io.vertx:vertx-core:${vertxVersion}")
+    // Vert.x
     implementation("io.vertx:vertx-web:${vertxVersion}")
     implementation("io.vertx:vertx-pg-client:${vertxVersion}")
     implementation("io.vertx:vertx-auth-jwt:${vertxVersion}")
+    implementation("io.vertx:vertx-config:${vertxVersion}")
+    implementation("io.vertx:vertx-rx-java2:${vertxVersion}")
 
-    // Misc
+    // Logging
     implementation("ch.qos.logback:logback-classic:1.2.3")
+
+    // DI
+    implementation("com.google.inject:guice:4.2.3")
 
     // Testing
     testImplementation("io.vertx:vertx-junit5:${vertxVersion}")

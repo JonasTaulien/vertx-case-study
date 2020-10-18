@@ -1,14 +1,15 @@
 package vertx.casestudy;
 
+import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
-import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.Tuple;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.pgclient.PgPool;
+import io.vertx.reactivex.sqlclient.Row;
+import io.vertx.reactivex.sqlclient.RowSet;
+import io.vertx.reactivex.sqlclient.Tuple;
 
 public class HeadlineGetOneHandler implements Handler<RoutingContext> {
 
@@ -21,6 +22,7 @@ public class HeadlineGetOneHandler implements Handler<RoutingContext> {
 
 
 
+    @Inject
     public HeadlineGetOneHandler(PgPool pgPool, Responder responder) {
         this.pgPool = pgPool;
         this.responder = responder;

@@ -1,19 +1,19 @@
 package vertx.casestudy;
 
+import com.google.inject.Guice;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.pgclient.PgConnectOptions;
-import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.Tuple;
+import io.vertx.reactivex.config.ConfigRetriever;
+import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.pgclient.PgPool;
+import io.vertx.reactivex.sqlclient.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,12 +31,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 @ExtendWith(VertxExtension.class)
 public class HttpServerVerticleTest {
 
-    private static final RequestSpecification requestSpecification
-        = new RequestSpecBuilder()
-              .addFilters(asList(new ResponseLoggingFilter(), new RequestLoggingFilter()))
-              .setBaseUri("http://localhost:8080/")
-              .setBasePath("")
-              .build();
+    private RequestSpecification requestSpecification;
 
     private static final List<JsonObject> headlines = asList(
         new JsonObject()
@@ -66,34 +61,43 @@ public class HttpServerVerticleTest {
 
     @BeforeEach
     void prepare(Vertx vertx, VertxTestContext ctx) {
-        final var pgPool = PgPool.pool(
-            vertx,
-            new PgConnectOptions()
-                .setHost("localhost")
-                .setDatabase("case-study")
-                .setUser("example")
-                .setPassword("example"),
-            new PoolOptions()
-        );
+        final var injector = Guice.createInjector(new Module(vertx));
 
-        pgPool.preparedQuery("TRUNCATE headline RESTART IDENTITY;")
-              .execute(ctx.succeeding(
-                  ar -> pgPool.preparedQuery("INSERT INTO \"user\" (email, password) VALUES ($1, $2)")
-                              .execute(
-                                  Tuple.of(USER_EMAIL, USER_PASSWORD),
-                                  ctx.succeeding(at -> vertx.deployVerticle(
-                                      new HttpServerVerticle(vertx),
-                                      ctx.succeeding(id -> ctx.completeNow())
-                                  ))
-                              )
-              ));
+        final var httpServerVerticle = injector.getInstance(HttpServerVerticle.class);
+        final var configRetriever = injector.getInstance(ConfigRetriever.class);
+        final var pgPool = injector.getInstance(PgPool.class);
+
+        configRetriever.getConfig(ctx.succeeding(
+            config -> {
+                this.requestSpecification = new RequestSpecBuilder()
+                                                .addFilters(asList(
+                                                    new ResponseLoggingFilter(),
+                                                    new RequestLoggingFilter()
+                                                ))
+                                                .setBaseUri("http://localhost:" + config.getInteger("port"))
+                                                .setBasePath("")
+                                                .build();
+
+                pgPool.preparedQuery("TRUNCATE headline RESTART IDENTITY")
+                      .execute(ctx.succeeding(
+                          ar -> pgPool.preparedQuery("INSERT INTO \"user\" (email, password) VALUES ($1, $2)")
+                                      .execute(
+                                          Tuple.of(USER_EMAIL, USER_PASSWORD),
+                                          ctx.succeeding(at -> vertx.deployVerticle(
+                                              httpServerVerticle,
+                                              ctx.succeeding(id -> ctx.completeNow())
+                                          ))
+                                      )
+                      ));
+            }
+        ));
     }
 
 
 
     @Test
     void headlinesInitiallyEmpty() {
-        given(HttpServerVerticleTest.requestSpecification)
+        given(this.requestSpecification)
             .get("/headlines")
             .then()
             .assertThat()
@@ -108,7 +112,7 @@ public class HttpServerVerticleTest {
     void creatingHeadline() {
         final var headline = HttpServerVerticleTest.headlines.get(0);
 
-        final var body = given(HttpServerVerticleTest.requestSpecification)
+        final var body = given(this.requestSpecification)
                              .contentType(ContentType.JSON)
                              .header("Authorization", "Bearer " + getJwt())
                              .body(headline.encode())
@@ -132,7 +136,7 @@ public class HttpServerVerticleTest {
     void getHeadlines() {
         final var jwt = getJwt();
         HttpServerVerticleTest.headlines.forEach(
-            headline -> given(HttpServerVerticleTest.requestSpecification)
+            headline -> given(this.requestSpecification)
                             .header("Authorization", "Bearer " + jwt)
                             .contentType(ContentType.JSON)
                             .body(headline.encode())
@@ -142,7 +146,7 @@ public class HttpServerVerticleTest {
                             .statusCode(201)
         );
 
-        final var body = given(HttpServerVerticleTest.requestSpecification)
+        final var body = given(this.requestSpecification)
                              .get("/headlines")
                              .then()
                              .assertThat()
@@ -164,7 +168,7 @@ public class HttpServerVerticleTest {
         final var headline = HttpServerVerticleTest.headlines.get(0);
 
         final var idOfCreatedHeadline
-            = given(HttpServerVerticleTest.requestSpecification)
+            = given(this.requestSpecification)
                   .header("Authorization", "Bearer " + getJwt())
                   .contentType(ContentType.JSON)
                   .body(headline.encode())
@@ -177,7 +181,7 @@ public class HttpServerVerticleTest {
                   .jsonPath()
                   .getInt("id");
 
-        final var body = given(HttpServerVerticleTest.requestSpecification)
+        final var body = given(this.requestSpecification)
                              .get("/headline/" + idOfCreatedHeadline)
                              .then()
                              .assertThat()
@@ -211,7 +215,7 @@ public class HttpServerVerticleTest {
 
 
     private String getJwt() {
-        return given(HttpServerVerticleTest.requestSpecification)
+        return given(this.requestSpecification)
                    .contentType(ContentType.JSON)
                    .body(user.encode())
                    .post("/login")

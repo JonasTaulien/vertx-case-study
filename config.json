@@ -1,0 +1,9 @@
+{
+    "port": 8080,
+    "db": {
+        "host": "localhost",
+        "database": "case-study",
+        "user": "example",
+        "password": "password"
+    }
+}

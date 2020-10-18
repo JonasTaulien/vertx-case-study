@@ -1,27 +1,17 @@
 package vertx.casestudy;
 
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import org.slf4j.LoggerFactory;
+import com.google.inject.Guice;
+import io.vertx.reactivex.core.Vertx;
 
 public class Main {
 
     public static void main(String[] args) {
-        final var log = LoggerFactory.getLogger(Main.class);
+        final var vertx = Vertx.vertx();
 
-        final var vertx = Vertx.vertx(new VertxOptions());
+        final var injector = Guice.createInjector(new Module(vertx));
 
-        vertx.deployVerticle(
-            new HttpServerVerticle(vertx),
-            new DeploymentOptions(),
-            future -> {
-                if (future.succeeded()) {
-                    log.info("Successfully started server");
-                } else {
-                    log.info("Failed to start server");
-                }
-            }
-        );
+        final var caseStudy = injector.getInstance(CaseStudy.class);
+
+        caseStudy.start();
     }
 }
