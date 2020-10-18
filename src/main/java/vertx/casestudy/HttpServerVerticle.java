@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
-    private final Logger log = LoggerFactory.getLogger(HttpServerVerticle.class);
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final PgPool pgPool;
 

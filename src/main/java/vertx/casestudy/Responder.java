@@ -11,17 +11,21 @@ import org.slf4j.LoggerFactory;
 
 public class Responder {
 
-    private final Logger log = LoggerFactory.getLogger(Responder.class);
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    public void respondError(RoutingContext ctx, HttpResponseStatus statusCode, Throwable t){
+
+
+    public void respondError(RoutingContext ctx, HttpResponseStatus statusCode, Throwable t) {
         log.error("An error occurred:", t);
 
         this.respond(
             ctx,
             statusCode,
-            new JsonObject().put("error", (t != null) ? t.toString(): "Unknown error")
+            new JsonObject().put("error", (t != null) ? t.toString() : "Unknown error")
         );
     }
+
+
 
     public void respond(RoutingContext ctx, HttpResponseStatus statusCode, JsonObject body) {
         ctx.response()
