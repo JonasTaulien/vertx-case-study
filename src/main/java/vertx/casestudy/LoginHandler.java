@@ -20,13 +20,16 @@ public class LoginHandler implements Handler<RoutingContext> {
 
     private final JWTAuth jwtAuth;
 
+    private final JsonObject jwtConfig;
+
 
 
     @Inject
-    public LoginHandler(PgPool pgPool, Responder responder, JWTAuth jwtAuth) {
+    public LoginHandler(PgPool pgPool, Responder responder, JWTAuth jwtAuth, JsonObject config) {
         this.pgPool = pgPool;
         this.responder = responder;
         this.jwtAuth = jwtAuth;
+        this.jwtConfig = config.getJsonObject("jwt");
     }
 
 
@@ -51,9 +54,9 @@ public class LoginHandler implements Handler<RoutingContext> {
                                 final var token = this.jwtAuth.generateToken(
                                     new JsonObject(),
                                     new JWTOptions()
-                                        .setExpiresInMinutes(60)
+                                        .setExpiresInMinutes(this.jwtConfig.getInteger("expiresInMinutes"))
                                         .setSubject(String.valueOf(userId))
-                                        .setAlgorithm("RS256")
+                                        .setAlgorithm(this.jwtConfig.getString("algorithm"))
                                 );
 
                                 this.responder

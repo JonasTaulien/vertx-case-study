@@ -1,9 +1,16 @@
 {
     "port": 8080,
     "db": {
+        "port": 5432,
         "host": "localhost",
         "database": "case-study",
         "user": "example",
-        "password": "password"
+        "password": "example"
+    },
+    "jwt": {
+        "algorithm": "RS256",
+        "publicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5C9z/16vtDWW3Aj4ighQLVHax76V3Xl90NPTDupbiJXGGhG5/pEnASBw0WdFx7dYYQn90tDcvxfLk/8DwOL5+nov3fYirJrcmzp5Y1rgczVNdeOcBlyRRevLi29lg0BDbj1R5p6/LnAr3qocsDhuYEYszmu9AC/eTn9sCRTPEzz37Pf1qd51EUc6Sq1gTaJv+ud/THZGxM4V4uDL9wWahVdYc1Fe8RaZItP7bjjAnX5BmVyC0eFrWA1D9Q6bkxye/wEr44ytkMSWA3cBm5EA1H4rhnU9PsLmeeZ1YvI1NEAdqGfnlYp+JYDk0edRDkH+AxRHIblTOq0xLcHCS6ixuwIDAQAB",
+        "privateKey": "MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDkL3P/Xq+0NZbcCPiKCFAtUdrHvpXdeX3Q09MO6luIlcYaEbn+kScBIHDRZ0XHt1hhCf3S0Ny/F8uT/wPA4vn6ei/d9iKsmtybOnljWuBzNU1145wGXJFF68uLb2WDQENuPVHmnr8ucCveqhywOG5gRizOa70AL95Of2wJFM8TPPfs9/Wp3nURRzpKrWBNom/6539MdkbEzhXi4Mv3BZqFV1hzUV7xFpki0/tuOMCdfkGZXILR4WtYDUP1DpuTHJ7/ASvjjK2QxJYDdwGbkQDUfiuGdT0+wuZ55nVi8jU0QB2oZ+eVin4lgOTR51EOQf4DFEchuVM6rTEtwcJLqLG7AgMBAAECggEAcxOHYWNEIxLfmOohRaN5o9FjD1cLR11M2TLqftwr+07lUCJedYaIcCYHH2QAqf7J4G5khpv0p559eY6jOvR88xgJ6duGkxuqY9Jyg2vCQ/e+r9RwzDiEvwlyZkhwnmebWg4srqyiZ+4EAdAylaBv8beSQyvMbjq110qlllLbN6yUqlI/U09WlhIOrS6Hu/w+mu9qYcHU6ivW8uuGegcMjQXUMw+KB6v9RDp3/EXwZJ3Z0Uw1qAsNuwF7g9+gGtZ9u3HPNNoIASZ+vIRP3IAyx6XNb5M0MYPhChwvGUuGagER7DbGaIQBnpD8+jiCLY6fgOiC1vJrVixq3wcMC9dbmQKBgQD8s2qG95WUc1GURGAYH3KkBnJVX4F61gHBYmPj7b+KKnq3Vfna2oUu4d1aR7tUkF7xu+MowVXK5M4kgPhw5NSvnch+9Zv21v7Ve5GxEk6MDR36kwc5HEmEwU70m7rh/JS4q+quN/pJsEd5usL1vL5Yv94FMlk98vYoBW1IHgREpwKBgQDnKhnFIBTL+MmMCUhHaNwdySzRPq2vzvkvF62vZWVWDpx0jhTHdTIo+tgwBxzyBc7+kugpKieWFgrEKzMI5gtz9jgqwG7aISI6TKY1Tde0PWAi57qbQueJEZ45f9nccTcyCo65bddiz5hmAfY2irGffOqlnBW3Iq1qVpRiu7OIzQKBgQDZnNPu2ITaaxhkmyE5hNNfhyGsfWtuUZ7/XvBwlwusOvqkqQhaPHYWsnDBTyZ2I0Fv4II1VZDBAZq3+sx3w8eYWEMRegbOYcTgKOKE3yP/HUikwTqmJsL07NdGdFlSRQX5piqZzyDdlk1m+brsjZZJrSjPxtTtMS5jtpCuWxMH3wKBgQC98t5SGNZ99OTIaSg3ZXbaEuD836AhAtXHWJGjupHWcRMmw0lXzHl3KwhSDsY+KX+5uEWE7dqxfVNDdqvs9/sZQo1Ms+ti2i8h8LHywxAoTvacOAYiZouTGiMF5ITEm1Nbj0lQHW4LB8KWr639i2IBR8gYZXWCksAkzRgJOWuBUQKBgQCd5G72mLW8lpoiDllL4ZAkbiTswJL2lfpjgyfeA16/KGB97kO70gXR/z4JNCZ8tV7kKUZfblRCUopd/l8VR590E6INstd81Xk32pdnOl2S4rWaDGvNI7Ul/15Jmq2j4EQeez6EngvgrvzMDiZ8py9IXWR8gqCPGj1398RMKmTGow==",
+        "expiresInMinutes": 60
     }
 }

@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
@@ -28,7 +29,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private final JWTAuthHandler jwtAuthHandler;
 
-    private final ConfigRetriever configRetriever;
+    private final JsonObject config;
 
 
 
@@ -40,7 +41,8 @@ public class HttpServerVerticle extends AbstractVerticle {
         HeadlineGetOneHandler headlineGetOneHandler,
         LoginHandler loginHandler,
         JWTAuthHandler jwtAuthHandler,
-        ConfigRetriever configRetriever
+        ConfigRetriever configRetriever,
+        JsonObject config
     ) {
         this.responder = responder;
         this.headlineCreateHandler = headlineCreateHandler;
@@ -48,7 +50,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         this.headlineGetOneHandler = headlineGetOneHandler;
         this.loginHandler = loginHandler;
         this.jwtAuthHandler = jwtAuthHandler;
-        this.configRetriever = configRetriever;
+        this.config = config;
     }
 
 
@@ -87,29 +89,20 @@ public class HttpServerVerticle extends AbstractVerticle {
                              )
               );
 
-        this.configRetriever
-            .getConfig(
-                configAr -> {
-                    if (configAr.succeeded()) {
-                        this.vertx
-                            .createHttpServer(new HttpServerOptions())
-                            .requestHandler(router)
-                            .listen(
-                                configAr.result().getInteger("port"),
-                                ar -> {
-                                    try {
-                                        if (ar.succeeded()) {
-                                            startPromise.complete();
-                                        } else {
-                                            startPromise.fail(ar.cause());
-                                        }
-                                    } catch (Throwable t) {
-                                        startPromise.fail(t);
-                                    }
-                                }
-                            );
-                    } else {
-                        startPromise.fail(configAr.cause());
+        this.vertx
+            .createHttpServer(new HttpServerOptions())
+            .requestHandler(router)
+            .listen(
+                config.getInteger("port"),
+                ar -> {
+                    try {
+                        if (ar.succeeded()) {
+                            startPromise.complete();
+                        } else {
+                            startPromise.fail(ar.cause());
+                        }
+                    } catch (Throwable t) {
+                        startPromise.fail(t);
                     }
                 }
             );
