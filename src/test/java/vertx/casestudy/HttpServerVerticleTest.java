@@ -64,33 +64,31 @@ public class HttpServerVerticleTest {
         final var injector = Guice.createInjector(new GuiceModule(vertx));
 
         final var httpServerVerticle = injector.getInstance(HttpServerVerticle.class);
-        final var configRetriever = injector.getInstance(ConfigRetriever.class);
         final var pgPool = injector.getInstance(PgPool.class);
+        final var config = injector.getInstance(JsonObject.class);
 
-        configRetriever.getConfig(ctx.succeeding(
-            config -> {
-                this.requestSpecification = new RequestSpecBuilder()
-                                                .addFilters(asList(
-                                                    new ResponseLoggingFilter(),
-                                                    new RequestLoggingFilter()
-                                                ))
-                                                .setBaseUri("http://localhost:" + config.getInteger("port"))
-                                                .setBasePath("")
-                                                .build();
 
-                pgPool.preparedQuery("TRUNCATE headline RESTART IDENTITY")
-                      .execute(ctx.succeeding(
-                          ar -> pgPool.preparedQuery("INSERT INTO \"user\" (email, password) VALUES ($1, $2)")
-                                      .execute(
-                                          Tuple.of(USER_EMAIL, USER_PASSWORD),
-                                          ctx.succeeding(at -> vertx.deployVerticle(
-                                              httpServerVerticle,
-                                              ctx.succeeding(id -> ctx.completeNow())
-                                          ))
-                                      )
-                      ));
-            }
-        ));
+        this.requestSpecification = new RequestSpecBuilder()
+                                        .addFilters(asList(
+                                            new ResponseLoggingFilter(),
+                                            new RequestLoggingFilter()
+                                        ))
+                                        .setBaseUri("http://localhost:" + config.getInteger("port"))
+                                        .setBasePath("")
+                                        .build();
+
+        pgPool.preparedQuery("TRUNCATE headline RESTART IDENTITY")
+              .rxExecute()
+              .flatMap(
+                  rowSet -> pgPool.preparedQuery("INSERT INTO \"user\" (email, password) VALUES ($1, $2)")
+                                  .rxExecute(Tuple.of(USER_EMAIL, USER_PASSWORD))
+              )
+              .flatMap(rowSet -> vertx.rxDeployVerticle(httpServerVerticle))
+              .subscribe(
+                  id -> ctx.completeNow(),
+                  ctx::failNow
+              );
+
     }
 
 
@@ -220,8 +218,8 @@ public class HttpServerVerticleTest {
             .contentType(ContentType.JSON)
             .body(
                 new JsonObject()
-                      .put("email", "not-existing@example.com")
-                      .put("password", "wrong secret")
+                    .put("email", "not-existing@example.com")
+                    .put("password", "wrong secret")
             )
             .post("/login")
             .then()
