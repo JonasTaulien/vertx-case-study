@@ -61,7 +61,7 @@ public class HttpServerVerticleTest {
 
     @BeforeEach
     void prepare(Vertx vertx, VertxTestContext ctx) {
-        final var injector = Guice.createInjector(new Module(vertx));
+        final var injector = Guice.createInjector(new GuiceModule(vertx));
 
         final var httpServerVerticle = injector.getInstance(HttpServerVerticle.class);
         final var configRetriever = injector.getInstance(ConfigRetriever.class);

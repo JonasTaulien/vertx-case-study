@@ -16,13 +16,13 @@ import io.vertx.reactivex.ext.web.handler.JWTAuthHandler;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
 
-public class Module extends AbstractModule {
+public class GuiceModule extends AbstractModule {
 
     private final Vertx vertx;
 
 
 
-    public Module(Vertx vertx) {
+    public GuiceModule(Vertx vertx) {
         this.vertx = vertx;
     }
 
