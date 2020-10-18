@@ -1,5 +1,6 @@
 package vertx.casestudy;
 
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -62,14 +63,12 @@ public class HttpServerVerticle extends AbstractVerticle {
                              .allowedMethod(HttpMethod.POST)
                              .allowedMethod(HttpMethod.GET)
                              .allowedMethod(HttpMethod.OPTIONS)
-                             .allowedHeader("Access-Control-Allow-Origin")
-                             .allowedHeader("Origin")
-                             .allowedHeader("Content-Type")
-                             .allowedHeader("Accept")
-                             .allowedHeader("Authorization")
-              );
-
-        router.route()
+                             .allowedHeader(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN.toString())
+                             .allowedHeader(HttpHeaderNames.ORIGIN.toString())
+                             .allowedHeader(HttpHeaderNames.CONTENT_TYPE.toString())
+                             .allowedHeader(HttpHeaderNames.ACCEPT.toString())
+                             .allowedHeader(HttpHeaderNames.AUTHORIZATION.toString())
+              )
               .handler(BodyHandler.create())
               .handler(ctx -> {
                   log.info("New Request {}", ctx.request().path());
