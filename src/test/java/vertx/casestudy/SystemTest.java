@@ -63,7 +63,6 @@ public class SystemTest {
     void prepare(Vertx vertx, VertxTestContext ctx) {
         final var injector = Guice.createInjector(new GuiceModule(vertx));
 
-        final var httpServerVerticle = injector.getInstance(HttpServerVerticle.class);
         final var pgPool = injector.getInstance(PgPool.class);
         final var config = injector.getInstance(JsonObject.class);
 
@@ -82,7 +81,8 @@ public class SystemTest {
                   rowSet -> pgPool.preparedQuery("INSERT INTO \"user\" (email, password) VALUES ($1, $2)")
                                   .rxExecute(Tuple.of(USER_EMAIL, USER_PASSWORD))
               )
-              .flatMap(rowSet -> vertx.rxDeployVerticle(httpServerVerticle))
+              .flatMap(rowSet -> vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class)))
+              .flatMap(rowSet -> vertx.rxDeployVerticle(injector.getInstance(AuthVerticle.class)))
               .flatMap(rowSet -> vertx.rxDeployVerticle(
                   () -> injector.getInstance(HeadlineDataStoreVerticle.class),
                   new DeploymentOptions().setInstances(3))

@@ -3,8 +3,6 @@ package vertx.casestudy;
 import com.google.inject.Inject;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.functions.Consumer;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
@@ -12,22 +10,21 @@ import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Row;
 import io.vertx.reactivex.sqlclient.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 
 public class HeadlineDataStoreVerticle extends AbstractVerticle {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
-
     private final PgPool pgPool;
+
+    private final MessageResponder responder;
 
 
 
     @Inject
-    public HeadlineDataStoreVerticle(PgPool pgPool) {
+    public HeadlineDataStoreVerticle(PgPool pgPool, MessageResponder responder) {
         this.pgPool = pgPool;
+        this.responder = responder;
     }
 
 
@@ -73,7 +70,7 @@ public class HeadlineDataStoreVerticle extends AbstractVerticle {
             .map(rowSet -> rowSet.iterator().next().getInteger("id"))
             .subscribe(
                 idOfCreatedHeadline -> message.reply(body.put("id", idOfCreatedHeadline)),
-                this.replyWithError(message)
+                this.responder.replyWithError(message)
             );
     }
 
@@ -93,7 +90,7 @@ public class HeadlineDataStoreVerticle extends AbstractVerticle {
             .toList()
             .subscribe(
                 headlines -> message.reply(new JsonObject().put("result", new JsonArray(headlines))),
-                this.replyWithError(message)
+                this.responder.replyWithError(message)
             );
     }
 
@@ -114,22 +111,13 @@ public class HeadlineDataStoreVerticle extends AbstractVerticle {
             .map(HeadlineDataStoreVerticle::rowToJson)
             .subscribe(
                 message::reply,
-                this.replyWithError(message)
+                this.responder.replyWithError(message)
             );
     }
 
 
 
-    private Consumer<Throwable> replyWithError(Message<JsonObject> message) {
-        return error -> {
-            log.error("Error while creating headline", error);
 
-            message.reply(
-                new JsonObject().put("error", error.getMessage()),
-                new DeliveryOptions().addHeader("FAILED", "FAILED")
-            );
-        };
-    }
 
 
 

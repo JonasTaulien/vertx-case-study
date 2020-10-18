@@ -31,7 +31,7 @@ public class GuiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(Responder.class).in(Scopes.SINGLETON);
+        bind(HttpResponder.class).in(Scopes.SINGLETON);
     }
 
 

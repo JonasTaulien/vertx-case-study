@@ -19,9 +19,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    private final Responder responder;
-
-    private final LoginHandler loginHandler;
+    private final HttpResponder responder;
 
     private final JWTAuthHandler jwtAuthHandler;
 
@@ -31,13 +29,11 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     @Inject
     public HttpServerVerticle(
-        Responder responder,
-        LoginHandler loginHandler,
+        HttpResponder responder,
         JWTAuthHandler jwtAuthHandler,
         JsonObject config
     ) {
         this.responder = responder;
-        this.loginHandler = loginHandler;
         this.jwtAuthHandler = jwtAuthHandler;
         this.config = config;
     }
@@ -66,7 +62,7 @@ public class HttpServerVerticle extends AbstractVerticle {
               .handler(this::getOneHeadline);
 
         router.post("/login")
-              .handler(this.loginHandler);
+              .handler(this::login);
 
         router.route()
               .failureHandler(
@@ -132,9 +128,42 @@ public class HttpServerVerticle extends AbstractVerticle {
 
 
 
+    public void login(RoutingContext ctx) {
+        final var body = ctx.getBodyAsJson();
+
+        ctx.vertx()
+           .eventBus()
+            .<JsonObject>rxRequest("user.login", body)
+            .subscribe(
+                msg -> {
+                    if(msg.headers().contains("FAILED")){
+                        final var error = msg.body().getJsonObject("error");
+
+                        if(error.getString("type").equals("INVALID_EMAIL_OR_PASSWORD")){
+                            this.responder
+                                .respondError(ctx, HttpResponseStatus.UNAUTHORIZED, "Invalid email or password");
+
+                        }else{
+                            ctx.fail(new Exception(error.getString("message")));
+                        }
+                    }else{
+                        this.responder.respond(
+                            ctx,
+                            HttpResponseStatus.OK,
+                            "application/jwt",
+                            msg.body().getString("result")
+                        );
+                    }
+                },
+                ctx::fail
+            );
+    }
+
+
+
     private Single<Message<JsonObject>> mapFailedMessageToException(Message<JsonObject> message) {
         return message.headers().contains("FAILED")
-                   ? Single.error(new Exception(message.body().getString("error")))
+                   ? Single.error(new Exception(message.body().getJsonObject("error").getString("message")))
                    : Single.just(message);
     }
 }

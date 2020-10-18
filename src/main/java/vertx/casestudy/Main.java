@@ -17,11 +17,9 @@ public class Main {
 
         final var injector = Guice.createInjector(new GuiceModule(vertx));
 
-        final var httpServerVerticle = injector.getInstance(HttpServerVerticle.class);
-
         vertx
             .rxDeployVerticle(
-                httpServerVerticle,
+                () -> injector.getInstance(HttpServerVerticle.class),
                 new DeploymentOptions().setInstances(3)
             )
             .subscribe(
@@ -37,6 +35,16 @@ public class Main {
             .subscribe(
                 id -> log.info("Successfully started data stores"),
                 err -> log.info("Failed to start data stores")
+            );
+
+        vertx
+            .rxDeployVerticle(
+                () -> injector.getInstance(AuthVerticle.class),
+                new DeploymentOptions().setInstances(1)
+            )
+            .subscribe(
+                id -> log.info("Successfully started auth"),
+                err -> log.info("Failed to start auth")
             );
     }
 }

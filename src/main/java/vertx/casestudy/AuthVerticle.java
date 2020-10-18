@@ -1,22 +1,20 @@
 package vertx.casestudy;
 
 import com.google.inject.Inject;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.Handler;
+import io.reactivex.Completable;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
-import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Tuple;
 
-public class LoginHandler implements Handler<RoutingContext> {
-
-    private static final String SELECT_USER_QUERY = "SELECT id FROM \"user\" WHERE email = $1 AND password = $2";
+public class AuthVerticle extends AbstractVerticle {
 
     private final PgPool pgPool;
 
-    private final Responder responder;
+    private final MessageResponder responder;
 
     private final JWTAuth jwtAuth;
 
@@ -25,7 +23,12 @@ public class LoginHandler implements Handler<RoutingContext> {
 
 
     @Inject
-    public LoginHandler(PgPool pgPool, Responder responder, JWTAuth jwtAuth, JsonObject config) {
+    public AuthVerticle(
+        PgPool pgPool,
+        MessageResponder responder,
+        JWTAuth jwtAuth,
+        JsonObject config
+    ) {
         this.pgPool = pgPool;
         this.responder = responder;
         this.jwtAuth = jwtAuth;
@@ -35,8 +38,20 @@ public class LoginHandler implements Handler<RoutingContext> {
 
 
     @Override
-    public void handle(RoutingContext ctx) {
-        final var body = ctx.getBodyAsJson();
+    public Completable rxStart() {
+        return vertx.eventBus()
+                    .consumer("user.login", this::login)
+                    .rxCompletionHandler();
+    }
+
+
+
+    private static final String SELECT_USER_QUERY = "SELECT id FROM \"user\" WHERE email = $1 AND password = $2";
+
+
+
+    private void login(Message<JsonObject> message) {
+        final var body = message.body();
         final var email = body.getString("email");
 
         this.pgPool
@@ -52,18 +67,20 @@ public class LoginHandler implements Handler<RoutingContext> {
                             final var userId = rowIterator.next().getInteger("id");
                             final var token = createJwtToken(userId);
 
-                            this.responder
-                                .respond(ctx, HttpResponseStatus.OK, "application/jwt", token);
+                            message.reply(new JsonObject().put("result", token));
 
                         } else {
-                            this.responder
-                                .respondError(ctx, HttpResponseStatus.UNAUTHORIZED, "Invalid email or password");
+                            this.responder.replyWithError(
+                                message,
+                                "INVALID_EMAIL_OR_PASSWORD",
+                                new Exception("Invalid email or password")
+                            );
                         }
                     } catch (Throwable t) {
-                        ctx.fail(t);
+                        this.responder.replyWithError(message, t);
                     }
                 },
-                ctx::fail
+                this.responder.replyWithError(message)
             );
     }
 

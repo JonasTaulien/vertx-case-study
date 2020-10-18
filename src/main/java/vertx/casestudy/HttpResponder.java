@@ -9,7 +9,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Responder {
+public class HttpResponder {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
