@@ -2,7 +2,7 @@ package vertx.casestudy;
 
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.Promise;
+import io.reactivex.Completable;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.config.ConfigRetriever;
@@ -56,7 +56,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
 
     @Override
-    public void start(Promise<Void> startPromise) throws Exception {
+    public Completable rxStart() {
         final var router = Router.router(this.vertx);
 
         router.route()
@@ -89,22 +89,10 @@ public class HttpServerVerticle extends AbstractVerticle {
                              )
               );
 
-        this.vertx
-            .createHttpServer(new HttpServerOptions())
-            .requestHandler(router)
-            .listen(
-                config.getInteger("port"),
-                ar -> {
-                    try {
-                        if (ar.succeeded()) {
-                            startPromise.complete();
-                        } else {
-                            startPromise.fail(ar.cause());
-                        }
-                    } catch (Throwable t) {
-                        startPromise.fail(t);
-                    }
-                }
-            );
+        return this.vertx
+                   .createHttpServer(new HttpServerOptions())
+                   .requestHandler(router)
+                   .rxListen(config.getInteger("port"))
+                   .ignoreElement();
     }
 }

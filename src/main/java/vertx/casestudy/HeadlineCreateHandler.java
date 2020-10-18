@@ -2,13 +2,9 @@ package vertx.casestudy;
 
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.pgclient.PgPool;
-import io.vertx.reactivex.sqlclient.Row;
-import io.vertx.reactivex.sqlclient.RowSet;
 import io.vertx.reactivex.sqlclient.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,37 +43,22 @@ public class HeadlineCreateHandler implements Handler<RoutingContext> {
 
         this.pgPool
             .preparedQuery(INSERT_HEADLINE_QUERY)
-            .execute(
-                Tuple.of(
-                    body.getString("source"),
-                    body.getString("author"),
-                    body.getString("title"),
-                    body.getString("description"),
-                    OffsetDateTime.parse(body.getString("publishedAt"))
-                ),
-                ar -> respond(ctx, body, ar)
+            .rxExecute(Tuple.of(
+                body.getString("source"),
+                body.getString("author"),
+                body.getString("title"),
+                body.getString("description"),
+                OffsetDateTime.parse(body.getString("publishedAt"))
+            ))
+            .map(rowSet -> rowSet.iterator().next().getInteger("id"))
+            .subscribe(
+                idOfCreatedHeadline -> this.responder
+                                           .respond(
+                                               ctx,
+                                               HttpResponseStatus.CREATED,
+                                               body.put("id", idOfCreatedHeadline)
+                                           ),
+                ctx::fail
             );
-    }
-
-
-
-    private void respond(
-        RoutingContext ctx,
-        JsonObject body,
-        AsyncResult<RowSet<Row>> ar
-    ) {
-        try {
-            if (ar.succeeded()) {
-                final var idOfCreatedHeadline = ar.result().iterator().next().getInteger("id");
-
-                this.responder
-                    .respond(ctx, HttpResponseStatus.CREATED, body.put("id", idOfCreatedHeadline));
-
-            } else {
-                ctx.fail(ar.cause());
-            }
-        } catch (Throwable t) {
-            ctx.fail(t);
-        }
     }
 }

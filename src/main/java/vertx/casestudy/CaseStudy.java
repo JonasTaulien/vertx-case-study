@@ -25,16 +25,10 @@ public class CaseStudy {
 
 
     public void start() {
-        vertx.deployVerticle(
-            httpServerVerticle,
-            new DeploymentOptions(),
-            future -> {
-                if (future.succeeded()) {
-                    log.info("Successfully started server");
-                } else {
-                    log.info("Failed to start server");
-                }
-            }
-        );
+        vertx.rxDeployVerticle(httpServerVerticle, new DeploymentOptions())
+             .subscribe(
+                 id -> log.info("Successfully started server"),
+                 err -> log.info("Failed to start server")
+             );
     }
 }

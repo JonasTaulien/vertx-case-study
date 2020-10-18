@@ -2,13 +2,11 @@ package vertx.casestudy;
 
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Row;
-import io.vertx.reactivex.sqlclient.RowSet;
 import io.vertx.reactivex.sqlclient.Tuple;
 
 public class HeadlineGetOneHandler implements Handler<RoutingContext> {
@@ -35,29 +33,13 @@ public class HeadlineGetOneHandler implements Handler<RoutingContext> {
         final var headlineId = Integer.parseInt(ctx.pathParam("id"));
         this.pgPool
             .preparedQuery(SELECT_ONE_HEADLINE_QUERY)
-            .execute(Tuple.of(headlineId), ar -> respond(ctx, ar));
-    }
-
-
-
-    private void respond(RoutingContext ctx, AsyncResult<RowSet<Row>> ar) {
-        try {
-            if (ar.succeeded()) {
-                final var row = ar.result().iterator().next();
-
-                this.responder
-                    .respond(
-                        ctx,
-                        HttpResponseStatus.OK,
-                        HeadlineGetOneHandler.rowToJson(row)
-                    );
-
-            } else {
-                ctx.fail(ar.cause());
-            }
-        } catch (Throwable t) {
-            ctx.fail(t);
-        }
+            .rxExecute(Tuple.of(headlineId))
+            .map(resultSet -> resultSet.iterator().next())
+            .map(HeadlineGetOneHandler::rowToJson)
+            .subscribe(
+                rowAsJson -> this.responder.respond(ctx, HttpResponseStatus.OK, rowAsJson),
+                ctx::fail
+            );
     }
 
 
