@@ -67,7 +67,6 @@ public class HttpServerVerticleTest {
         final var pgPool = injector.getInstance(PgPool.class);
         final var config = injector.getInstance(JsonObject.class);
 
-
         this.requestSpecification = new RequestSpecBuilder()
                                         .addFilters(asList(
                                             new ResponseLoggingFilter(),
@@ -88,7 +87,6 @@ public class HttpServerVerticleTest {
                   id -> ctx.completeNow(),
                   ctx::failNow
               );
-
     }
 
 
