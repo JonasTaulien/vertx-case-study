@@ -4,9 +4,11 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
@@ -59,6 +61,19 @@ public class HttpServerVerticle extends AbstractVerticle {
                   log.info("New Request {}", ctx.request().path());
                   ctx.next();
               });
+
+        router.route()
+              .handler(
+                  CorsHandler.create("*")
+                             .allowedMethod(HttpMethod.POST)
+                             .allowedMethod(HttpMethod.GET)
+                             .allowedMethod(HttpMethod.OPTIONS)
+                             .allowedHeader("Access-Control-Allow-Origin")
+                             .allowedHeader("Origin")
+                             .allowedHeader("Content-Type")
+                             .allowedHeader("Accept")
+                             .allowedHeader("Authorization")
+              );
 
         router.post("/headline")
               .handler(this.headlineCreateHandler);

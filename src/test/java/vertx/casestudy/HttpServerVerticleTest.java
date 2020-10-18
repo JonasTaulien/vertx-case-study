@@ -107,7 +107,7 @@ public class HttpServerVerticleTest {
 
         final var bodyAsJson = new JsonObject(body.asString());
 
-        assertThat(bodyAsJson).isEqualTo(headline.put("id", 1));
+        assertThat(bodyAsJson).isEqualTo(headline.copy().put("id", 1));
     }
 
 
@@ -168,6 +168,6 @@ public class HttpServerVerticleTest {
 
         final var bodyAsJson = new JsonObject(body.asString());
 
-        assertThat(bodyAsJson).isEqualTo(headline.put("id", 1));
+        assertThat(bodyAsJson).isEqualTo(headline.copy().put("id", 1));
     }
 }

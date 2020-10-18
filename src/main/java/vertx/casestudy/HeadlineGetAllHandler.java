@@ -35,7 +35,7 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext ctx) {
         this.pgPool
-            .query(SELECT_ALL_HEADLINES_QUERY)
+            .preparedQuery(SELECT_ALL_HEADLINES_QUERY)
             .execute(ar -> respond(ctx, ar));
     }
 
