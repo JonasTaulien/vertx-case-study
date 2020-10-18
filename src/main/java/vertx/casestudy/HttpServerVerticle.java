@@ -55,12 +55,6 @@ public class HttpServerVerticle extends AbstractVerticle {
     @Override
     public void start(Promise<Void> startPromise) throws Exception {
         final var router = Router.router(this.vertx);
-        router.route()
-              .handler(BodyHandler.create())
-              .handler(ctx -> {
-                  log.info("New Request {}", ctx.request().path());
-                  ctx.next();
-              });
 
         router.route()
               .handler(
@@ -74,6 +68,13 @@ public class HttpServerVerticle extends AbstractVerticle {
                              .allowedHeader("Accept")
                              .allowedHeader("Authorization")
               );
+
+        router.route()
+              .handler(BodyHandler.create())
+              .handler(ctx -> {
+                  log.info("New Request {}", ctx.request().path());
+                  ctx.next();
+              });
 
         router.post("/headline")
               .handler(this.headlineCreateHandler);

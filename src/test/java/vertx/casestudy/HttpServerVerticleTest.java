@@ -170,4 +170,15 @@ public class HttpServerVerticleTest {
 
         assertThat(bodyAsJson).isEqualTo(headline.copy().put("id", 1));
     }
+
+    @Test
+    void cors(){
+        given(HttpServerVerticleTest.requestSpecification)
+            .header("Origin", "localhost")
+            .options("/headlines")
+            .then()
+            .assertThat()
+            .statusCode(405)
+            .header("Access-Control-Allow-Origin", equalTo("*"));
+    }
 }
