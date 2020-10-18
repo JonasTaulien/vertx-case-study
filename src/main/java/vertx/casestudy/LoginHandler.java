@@ -41,47 +41,41 @@ public class LoginHandler implements Handler<RoutingContext> {
 
         this.pgPool
             .preparedQuery(SELECT_USER_QUERY)
-            .execute(
-                Tuple.of(email, body.getString("password")),
-                ar -> {
+            .rxExecute(Tuple.of(email, body.getString("password")))
+            .subscribe(
+                rowSet -> {
                     try {
-                        if (ar.succeeded()) {
-                            final var rowIterator = ar.result().iterator();
-                            final var loginSuccessful = rowIterator.hasNext();
+                        final var rowIterator = rowSet.iterator();
+                        final var loginSuccessful = rowIterator.hasNext();
 
-                            if (loginSuccessful) {
-                                final var userId = rowIterator.next().getInteger("id");
-                                final var token = this.jwtAuth.generateToken(
-                                    new JsonObject(),
-                                    new JWTOptions()
-                                        .setExpiresInMinutes(this.jwtConfig.getInteger("expiresInMinutes"))
-                                        .setSubject(String.valueOf(userId))
-                                        .setAlgorithm(this.jwtConfig.getString("algorithm"))
-                                );
+                        if (loginSuccessful) {
+                            final var userId = rowIterator.next().getInteger("id");
+                            final var token = createJwtToken(userId);
 
-                                this.responder
-                                    .respond(
-                                        ctx,
-                                        HttpResponseStatus.OK,
-                                        "application/jwt",
-                                        token
-                                    );
+                            this.responder
+                                .respond(ctx, HttpResponseStatus.OK, "application/jwt", token);
 
-                            } else {
-                                this.responder
-                                    .respondError(
-                                        ctx,
-                                        HttpResponseStatus.UNAUTHORIZED,
-                                        "Invalid email or password"
-                                    );
-                            }
                         } else {
-                            ctx.fail(ar.cause());
+                            this.responder
+                                .respondError(ctx, HttpResponseStatus.UNAUTHORIZED, "Invalid email or password");
                         }
                     } catch (Throwable t) {
                         ctx.fail(t);
                     }
-                }
+                },
+                ctx::fail
             );
+    }
+
+
+
+    private String createJwtToken(Integer userId) {
+        return this.jwtAuth.generateToken(
+            new JsonObject(),
+            new JWTOptions()
+                .setExpiresInMinutes(this.jwtConfig.getInteger("expiresInMinutes"))
+                .setSubject(String.valueOf(userId))
+                .setAlgorithm(this.jwtConfig.getString("algorithm"))
+        );
     }
 }

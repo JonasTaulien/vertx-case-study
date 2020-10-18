@@ -214,6 +214,23 @@ public class HttpServerVerticleTest {
 
 
 
+    @Test
+    void wrongCredentials() {
+        given(this.requestSpecification)
+            .contentType(ContentType.JSON)
+            .body(
+                new JsonObject()
+                      .put("email", "not-existing@example.com")
+                      .put("password", "wrong secret")
+            )
+            .post("/login")
+            .then()
+            .assertThat()
+            .statusCode(401);
+    }
+
+
+
     private String getJwt() {
         return given(this.requestSpecification)
                    .contentType(ContentType.JSON)
