@@ -9,10 +9,14 @@ import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 
 public class HeadlineCreateHandler implements Handler<RoutingContext> {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private static final String INSERT_HEADLINE_QUERY
         = "INSERT INTO headline (source, author, title, description, published_at) "
@@ -35,6 +39,9 @@ public class HeadlineCreateHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext ctx) {
         final var body = ctx.getBodyAsJson();
+        final var user = ctx.user().principal();
+
+        log.info("User with id {} will create headline", user.getString("sub"));
 
         this.pgPool
             .preparedQuery(INSERT_HEADLINE_QUERY)
