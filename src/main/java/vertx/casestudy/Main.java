@@ -1,6 +1,5 @@
 package vertx.casestudy;
 
-import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,18 +10,6 @@ public class Main {
 
 
     public static void main(String[] args) {
-        final var vertx = Vertx.vertx();
-
-        vertx.deployVerticle(
-            new MyFirstVerticle(),
-            ar -> {
-                if (ar.succeeded()) {
-                    log.info("Successfully started my first verticle");
-
-                } else {
-                    log.error("Failed to start my first verticle", ar.cause());
-                }
-            }
-        );
+        log.info("Hello World");
     }
 }
