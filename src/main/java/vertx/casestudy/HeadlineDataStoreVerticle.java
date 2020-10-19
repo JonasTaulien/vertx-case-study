@@ -10,10 +10,14 @@ import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Row;
 import io.vertx.reactivex.sqlclient.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 
 public class HeadlineDataStoreVerticle extends AbstractVerticle {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final PgPool pgPool;
 
@@ -57,6 +61,8 @@ public class HeadlineDataStoreVerticle extends AbstractVerticle {
 
     private void createHeadline(Message<JsonObject> message) {
         final var body = message.body();
+
+        log.info("Creating headline {}", body.encode());
 
         this.pgPool
             .preparedQuery(INSERT_HEADLINE_QUERY)
