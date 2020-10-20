@@ -22,6 +22,37 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(VertxExtension.class)
 public class HeadlineFetcherVerticleUnitTest {
 
+
+    final String headlineSource = "test-name";
+    final String headlineAuthor = "test-author";
+    final String headlineTitle = "test-title";
+    final String headlineDescription = "test-description";
+    final String headlinePublishedAt = OffsetDateTime.of(2020, 12, 10, 1, 14, 0, 0, ZoneOffset.UTC).toString();
+
+    final JsonObject newsApiMock = new JsonObject().put(
+        "articles", new JsonArray().add(
+            new JsonObject()
+                .put("source", new JsonObject().put("name", headlineSource))
+                .put("author", headlineAuthor)
+                .put("title", headlineTitle)
+                .put("description", headlineDescription)
+                .put("publishedAt", headlinePublishedAt)
+        )
+    );
+
+    final int NEWS_API_MOCK_SERVER_PORT = 19822;
+
+    final JsonObject testConfig = new JsonObject().put(
+        "newsapi",
+        new JsonObject()
+            .put("fetchIntervalInSeconds", 1)
+            .put("apiKey", "test-api-key")
+            .put("country", "test-country")
+            .put("category", "test-category")
+            .put("numberOfHeadlines", 1)
+    );
+
+
     @Test
     void fetch(Vertx vertx, VertxTestContext ctx) {
         final var serverCheck = ctx.checkpoint();
@@ -29,17 +60,7 @@ public class HeadlineFetcherVerticleUnitTest {
         final var requestCheck = ctx.checkpoint();
         final var eventBusCheck = ctx.checkpoint();
 
-        // Set up config
-        final var testConfig = new JsonObject().put(
-            "newsapi",
-            new JsonObject()
-                .put("fetchIntervalInSeconds", 1)
-                .put("apiKey", "test-api-key")
-                .put("country", "test-country")
-                .put("category", "test-category")
-                .put("numberOfHeadlines", 1)
-        );
-
+        // Set up config retriever
         final var configRetriever = ConfigRetriever.create(
             vertx,
             new ConfigRetrieverOptions()
@@ -51,30 +72,11 @@ public class HeadlineFetcherVerticleUnitTest {
                 .setScanPeriod(2000)
         );
 
-        final var serverPort = 19822;
-
         // Set up client
         final var webClient = WebClient.create(
             vertx,
             new WebClientOptions().setDefaultHost("localhost")
-                                  .setDefaultPort(serverPort)
-        );
-
-        final var headlineSource = "test-name";
-        final var headlineAuthor = "test-author";
-        final var headlineTitle = "test-title";
-        final var headlineDescription = "test-description";
-        final var headlinePublishedAt = OffsetDateTime.of(2020, 12, 10, 1, 14, 0, 0, ZoneOffset.UTC).toString();
-
-        final var headlines = new JsonObject().put(
-            "articles", new JsonArray().add(
-                new JsonObject()
-                    .put("source", new JsonObject().put("name", headlineSource))
-                    .put("author", headlineAuthor)
-                    .put("title", headlineTitle)
-                    .put("description", headlineDescription)
-                    .put("publishedAt", headlinePublishedAt)
-            )
+                                  .setDefaultPort(NEWS_API_MOCK_SERVER_PORT)
         );
 
         // Set up server
@@ -83,12 +85,12 @@ public class HeadlineFetcherVerticleUnitTest {
                  request -> {
                      assertThat(request.method()).isEqualTo(HttpMethod.GET);
                      // TODO: More assertions
-                     request.response().end(headlines.encode());
+                     request.response().end(newsApiMock.encode());
 
                      requestCheck.flag();
                  }
              )
-             .rxListen(serverPort)
+             .rxListen(NEWS_API_MOCK_SERVER_PORT)
              .subscribe(
                  server -> serverCheck.flag(),
                  ctx::failNow
