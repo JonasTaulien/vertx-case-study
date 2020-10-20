@@ -7,10 +7,14 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 
 public class HeadlineCreateHandler implements Handler<RoutingContext> {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final PgPool pgPool;
 
@@ -32,6 +36,10 @@ public class HeadlineCreateHandler implements Handler<RoutingContext> {
         final var title = body.getString("title");
         final var description = body.getString("description");
         final var publishedAt = OffsetDateTime.parse(body.getString("publishedAt"));
+
+        final var userId = ctx.user().principal().getString("sub");
+
+        log.info("User with id {} creates new headline", userId);
 
         this.pgPool
             .preparedQuery(
