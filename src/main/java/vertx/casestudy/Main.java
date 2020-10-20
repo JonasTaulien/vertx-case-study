@@ -46,5 +46,15 @@ public class Main {
                 id -> log.info("Successfully started auth"),
                 err -> log.info("Failed to start auth")
             );
+
+        vertx
+            .rxDeployVerticle(
+                () -> injector.getInstance(HeadlineFetcherVerticle.class),
+                new DeploymentOptions().setInstances(1)
+            )
+            .subscribe(
+                id -> log.info("Successfully started fetcher"),
+                err -> log.info("Failed to start fetcher")
+            );
     }
 }

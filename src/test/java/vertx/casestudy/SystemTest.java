@@ -14,6 +14,7 @@ import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Tuple;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,6 +92,11 @@ public class SystemTest {
                   id -> ctx.completeNow(),
                   ctx::failNow
               );
+    }
+
+    @AfterEach
+    void destroy(Vertx vertx, VertxTestContext ctx){
+        vertx.close(ctx.completing());
     }
 
 

@@ -9,13 +9,17 @@ import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
+import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.reactivex.ext.web.handler.JWTAuthHandler;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+
+import javax.inject.Named;
 
 public class GuiceModule extends AbstractModule {
 
@@ -110,5 +114,20 @@ public class GuiceModule extends AbstractModule {
     @Singleton
     JWTAuthHandler provideAuthHandler(JWTAuth jwtAuth) {
         return JWTAuthHandler.create(jwtAuth);
+    }
+
+
+
+    @Provides
+    @Singleton
+    WebClient provideNewsApiClient(Vertx vertx, JsonObject config) {
+        final var newsApiConfig = config.getJsonObject("newsapi");
+
+        return WebClient.create(
+            vertx,
+            new WebClientOptions()
+                .setDefaultHost(newsApiConfig.getString("host"))
+                .setDefaultPort(newsApiConfig.getInteger("port"))
+        );
     }
 }

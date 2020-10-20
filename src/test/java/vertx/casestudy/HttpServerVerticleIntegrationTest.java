@@ -11,6 +11,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.core.eventbus.EventBus;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,8 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(VertxExtension.class)
 public class HttpServerVerticleIntegrationTest {
 
-    private EventBus eventBus;
-
     private RequestSpecification requestSpecification;
 
 
@@ -33,8 +32,6 @@ public class HttpServerVerticleIntegrationTest {
         final var injector = Guice.createInjector(new GuiceModule(vertx));
 
         final var config = injector.getInstance(JsonObject.class);
-
-        this.eventBus = vertx.eventBus();
 
         this.requestSpecification = new RequestSpecBuilder()
                                         .addFilters(asList(
@@ -52,16 +49,21 @@ public class HttpServerVerticleIntegrationTest {
              );
     }
 
+    @AfterEach
+    void destroy(Vertx vertx, VertxTestContext ctx){
+        vertx.close(ctx.completing());
+    }
+
 
 
     @Test
-    void getHeadlines(VertxTestContext ctx) {
+    void getHeadlines(Vertx vertx, VertxTestContext ctx) {
         final var sendsMessageCheck = ctx.checkpoint();
         final var responseCheck = ctx.checkpoint();
 
         final var testHeadlines = new JsonArray().add(new JsonObject().put("test", "test"));
 
-        this.eventBus.consumer("headline.getAll", message -> {
+        vertx.eventBus().consumer("headline.getAll", message -> {
             sendsMessageCheck.flag();
             message.reply(new JsonObject().put("result", testHeadlines));
         });

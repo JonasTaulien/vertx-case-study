@@ -12,6 +12,7 @@ dependencies {
 
     // Vert.x
     implementation("io.vertx:vertx-web:${vertxVersion}")
+    implementation("io.vertx:vertx-web-client:${vertxVersion}")
     implementation("io.vertx:vertx-pg-client:${vertxVersion}")
     implementation("io.vertx:vertx-auth-jwt:${vertxVersion}")
     implementation("io.vertx:vertx-config:${vertxVersion}")
