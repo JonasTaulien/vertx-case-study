@@ -1,21 +1,33 @@
 package vertx.casestudy;
 
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
+import com.google.inject.Inject;
 import io.reactivex.Completable;
 import io.vertx.core.json.JsonObject;
-import io.vertx.reactivex.RxHelper;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
+import vertx.casestudy.headline.HeadlineCreateHandler;
+import vertx.casestudy.headline.HeadlineGetAllHandler;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    private final HeadlineCreateHandler headlineCreateHandler;
+
+    private final HeadlineGetAllHandler headlineGetAllHandler;
+
+
+@Inject
+    public HttpServerVerticle(
+        HeadlineCreateHandler headlineCreateHandler,
+        HeadlineGetAllHandler headlineGetAllHandler
+    ) {
+        this.headlineCreateHandler = headlineCreateHandler;
+        this.headlineGetAllHandler = headlineGetAllHandler;
+    }
 
 
 
@@ -39,17 +51,8 @@ public class HttpServerVerticle extends AbstractVerticle {
                  .end(new JsonObject().put("error", ctx.failure().getMessage()).encode());
           });
 
-        v1.get("/headlines")
-          .handler(ctx -> {
-              //
-          });
-
-        v1.post("/headlines")
-          .handler(ctx -> {
-              final var body = ctx.getBodyAsJson();
-
-              //
-          });
+        v1.get("/headlines").handler(this.headlineGetAllHandler);
+        v1.post("/headlines").handler(this.headlineCreateHandler);
 
         final var router = Router.router(vertx);
         router.mountSubRouter("/api/v1", v1);
