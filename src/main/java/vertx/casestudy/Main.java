@@ -15,7 +15,8 @@ public class Main {
 
     public static void main(String[] args) {
         final var vertx = Vertx.vertx(
-            new VertxOptions().setEventLoopPoolSize(4).setWorkerPoolSize(10)
+            new VertxOptions().setEventLoopPoolSize(4)
+                              .setWorkerPoolSize(10)
         );
 
         final var injector = Guice.createInjector(new Module(vertx));

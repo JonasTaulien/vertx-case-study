@@ -2,10 +2,11 @@ package vertx.casestudy.auth;
 
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.reactivex.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
-import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.pgclient.PgPool;
@@ -17,12 +18,15 @@ public class LoginHandler implements Handler<RoutingContext> {
 
     private final JWTAuth jwtAuth;
 
+    private final ConfigRetriever configRetriever;
+
 
 
     @Inject
-    public LoginHandler(PgPool pgPool, JWTAuth jwtAuth) {
+    public LoginHandler(PgPool pgPool, JWTAuth jwtAuth, ConfigRetriever configRetriever) {
         this.pgPool = pgPool;
         this.jwtAuth = jwtAuth;
+        this.configRetriever = configRetriever;
     }
 
 
@@ -42,12 +46,15 @@ public class LoginHandler implements Handler<RoutingContext> {
 
                         if (loginSuccessful) {
                             final var userId = rowIterator.next().getInteger("id");
-                            final var jwt = createToken(userId);
 
-                            ctx.response()
-                               .putHeader(HttpHeaderNames.CONTENT_TYPE, "application/jwt")
-                               .setStatusCode(200)
-                               .end(jwt);
+                            createToken(userId)
+                                .subscribe(
+                                    jwt -> ctx.response()
+                                              .putHeader(HttpHeaderNames.CONTENT_TYPE, "application/jwt")
+                                              .setStatusCode(200)
+                                              .end(jwt),
+                                    ctx::fail
+                                );
                         } else {
                             ctx.response()
                                .setStatusCode(401)
@@ -63,13 +70,18 @@ public class LoginHandler implements Handler<RoutingContext> {
 
 
 
-    private String createToken(int userId) {
-        return this.jwtAuth.generateToken(
-            new JsonObject(),
-            new JWTOptions()
-                .setExpiresInMinutes(60)
-                .setSubject(String.valueOf(userId))
-                .setAlgorithm("RS256")
-        );
+    private Single<String> createToken(int userId) {
+        return this.configRetriever
+            .rxGetConfig()
+            .map(config -> {
+                final var jwtConfig = config.getJsonObject("jwt");
+                return this.jwtAuth.generateToken(
+                    new JsonObject(),
+                    new JWTOptions()
+                        .setExpiresInMinutes(jwtConfig.getInteger("expiresInMinutes"))
+                        .setSubject(String.valueOf(userId))
+                        .setAlgorithm(jwtConfig.getString("algorithm"))
+                );
+            });
     }
 }

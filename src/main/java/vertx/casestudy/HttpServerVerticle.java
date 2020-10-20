@@ -25,6 +25,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private final JWTAuthHandler jwtAuthHandler;
 
+    private final JsonObject config;
+
 
 
     @Inject
@@ -32,12 +34,14 @@ public class HttpServerVerticle extends AbstractVerticle {
         HeadlineCreateHandler headlineCreateHandler,
         HeadlineGetAllHandler headlineGetAllHandler,
         LoginHandler loginHandler,
-        JWTAuthHandler jwtAuthHandler
+        JWTAuthHandler jwtAuthHandler,
+        JsonObject config
     ) {
         this.headlineCreateHandler = headlineCreateHandler;
         this.headlineGetAllHandler = headlineGetAllHandler;
         this.loginHandler = loginHandler;
         this.jwtAuthHandler = jwtAuthHandler;
+        this.config = config;
     }
 
 
@@ -76,7 +80,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         return this.vertx
             .createHttpServer()
             .requestHandler(router)
-            .rxListen(8080)
+            .rxListen(config.getInteger("port"))
             .ignoreElement();
     }
 }
