@@ -16,8 +16,9 @@ import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import vertx.casestudy.data.DataVerticle;
+import vertx.casestudy.http.HttpServerVerticle;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -25,7 +26,6 @@ import java.util.Arrays;
 import java.util.Base64;
 
 import static io.restassured.RestAssured.given;
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -59,6 +59,7 @@ public class SystemTest {
                                   .rxExecute(Tuple.of(user.getString("email"), user.getString("password")))
               )
               .flatMap(ros -> vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class)))
+              .flatMap(did -> vertx.rxDeployVerticle(injector.getInstance(DataVerticle.class)))
               .subscribe(
                   deploymentId -> ctx.completeNow(),
                   ctx::failNow

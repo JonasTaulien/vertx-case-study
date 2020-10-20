@@ -1,14 +1,16 @@
-package vertx.casestudy.headline;
+package vertx.casestudy.http.headline;
 
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vertx.casestudy.EventBusAddress;
 
 import java.time.OffsetDateTime;
 

@@ -1,4 +1,4 @@
-package vertx.casestudy.headline;
+package vertx.casestudy.http.headline;
 
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -6,11 +6,9 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Row;
-import io.vertx.sqlclient.PoolOptions;
 
 public class HeadlineGetAllHandler implements Handler<RoutingContext> {
 

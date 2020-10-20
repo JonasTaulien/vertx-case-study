@@ -1,4 +1,4 @@
-package vertx.casestudy;
+package vertx.casestudy.http;
 
 import com.google.inject.Inject;
 import io.reactivex.Completable;
@@ -9,9 +9,9 @@ import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import io.vertx.reactivex.ext.web.handler.JWTAuthHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vertx.casestudy.auth.LoginHandler;
-import vertx.casestudy.headline.HeadlineCreateHandler;
-import vertx.casestudy.headline.HeadlineGetAllHandler;
+import vertx.casestudy.http.auth.LoginHandler;
+import vertx.casestudy.http.headline.HeadlineCreateHandler;
+import vertx.casestudy.http.headline.HeadlineGetAllHandler;
 
 public class HttpServerVerticle extends AbstractVerticle {
 

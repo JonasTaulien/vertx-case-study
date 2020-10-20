@@ -6,6 +6,8 @@ import io.vertx.core.VertxOptions;
 import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vertx.casestudy.data.DataVerticle;
+import vertx.casestudy.http.HttpServerVerticle;
 
 public class Main {
 
@@ -29,6 +31,16 @@ public class Main {
             .subscribe(
                 deyploymentId -> log.info("Successfully deployed server(s) {}", deyploymentId),
                 error -> log.error("Failed to start server ", error)
+            );
+
+        vertx
+            .rxDeployVerticle(
+                () -> injector.getInstance(DataVerticle.class),
+                new DeploymentOptions().setInstances(3)
+            )
+            .subscribe(
+                deyploymentId -> log.info("Successfully deployed data verticle(s) {}", deyploymentId),
+                error -> log.error("Failed to start data verticle ", error)
             );
     }
 }
