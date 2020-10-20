@@ -2,13 +2,13 @@ package vertx.casestudy;
 
 import com.google.inject.Inject;
 import io.reactivex.Completable;
-import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vertx.casestudy.auth.LoginHandler;
 import vertx.casestudy.headline.HeadlineCreateHandler;
 import vertx.casestudy.headline.HeadlineGetAllHandler;
 
@@ -20,14 +20,19 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private final HeadlineGetAllHandler headlineGetAllHandler;
 
+    private final LoginHandler loginHandler;
 
-@Inject
+
+
+    @Inject
     public HttpServerVerticle(
         HeadlineCreateHandler headlineCreateHandler,
-        HeadlineGetAllHandler headlineGetAllHandler
+        HeadlineGetAllHandler headlineGetAllHandler,
+        LoginHandler loginHandler
     ) {
         this.headlineCreateHandler = headlineCreateHandler;
         this.headlineGetAllHandler = headlineGetAllHandler;
+        this.loginHandler = loginHandler;
     }
 
 
@@ -54,6 +59,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
         v1.get("/headlines").handler(this.headlineGetAllHandler);
         v1.post("/headlines").handler(this.headlineCreateHandler);
+        v1.post("/login").handler(this.loginHandler);
 
         final var router = Router.router(vertx);
         router.mountSubRouter("/api/v1", v1);

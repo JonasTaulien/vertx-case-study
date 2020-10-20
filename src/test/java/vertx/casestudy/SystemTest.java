@@ -12,6 +12,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.pgclient.PgPool;
+import io.vertx.reactivex.sqlclient.Tuple;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.Base64;
 
 import static io.restassured.RestAssured.given;
 import static java.util.Arrays.asList;
@@ -30,6 +32,10 @@ import static org.hamcrest.Matchers.equalTo;
 public class SystemTest {
 
     private RequestSpecification requestSpecification;
+
+    private final JsonObject user = new JsonObject()
+        .put("email", "test@test.de")
+        .put("password", "secret");
 
 
 
@@ -45,8 +51,12 @@ public class SystemTest {
 
         final var pgPool = injector.getInstance(PgPool.class);
 
-        pgPool.query("TRUNCATE headline RESTART IDENTITY")
+        pgPool.query("TRUNCATE headline RESTART IDENTITY; TRUNCATE \"user\" RESTART IDENTITY;")
               .rxExecute()
+              .flatMap(
+                  rowSet -> pgPool.preparedQuery("INSERT INTO \"user\" (email, password) VALUES ($1, $2)")
+                                  .rxExecute(Tuple.of(user.getString("email"), user.getString("password")))
+              )
               .flatMap(ros -> vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class)))
               .subscribe(
                   deploymentId -> ctx.completeNow(),
@@ -98,5 +108,32 @@ public class SystemTest {
         final var body = new JsonArray(bodyAsString);
 
         assertThat(body).isEqualTo(new JsonArray().add(headline.put("id", 1)));
+    }
+
+
+
+    @Test
+    void login() {
+
+        final var jwt = given(this.requestSpecification)
+            .contentType(ContentType.JSON)
+            .body(user.encode())
+            .post("/login")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .contentType("application/jwt")
+            .extract()
+            .body()
+            .asString();
+
+        final var decoder = Base64.getDecoder();
+
+        final String[] parts = jwt.split("\\.");
+        final var header = new JsonObject(new String(decoder.decode(parts[0])));
+        final var payload = new JsonObject(new String(decoder.decode(parts[1])));
+
+        assertThat(header.getString("typ")).isEqualTo("JWT");
+        assertThat(payload.getString("sub")).isEqualTo("1");
     }
 }
