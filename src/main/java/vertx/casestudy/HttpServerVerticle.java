@@ -1,12 +1,63 @@
 package vertx.casestudy;
 
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.reactivex.Completable;
+import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.RxHelper;
 import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+
+
     @Override
     public Completable rxStart() {
-        return Completable.complete();
+        final var v1 = Router.router(vertx);
+
+        v1.post()
+          .handler(BodyHandler.create());
+
+        v1.route()
+          .handler(ctx -> {
+              log.info("New request {} {}", ctx.request().method(), ctx.request().path());
+              ctx.next();
+          })
+          .failureHandler(ctx -> {
+              log.error("Error", ctx.failure());
+
+              ctx.response()
+                 .setStatusCode(500)
+                 .end(new JsonObject().put("error", ctx.failure().getMessage()).encode());
+          });
+
+        v1.get("/headlines")
+          .handler(ctx -> {
+              //
+          });
+
+        v1.post("/headlines")
+          .handler(ctx -> {
+              final var body = ctx.getBodyAsJson();
+
+              //
+          });
+
+        final var router = Router.router(vertx);
+        router.mountSubRouter("/api/v1", v1);
+
+        return this.vertx
+            .createHttpServer()
+            .requestHandler(router)
+            .rxListen(8080)
+            .ignoreElement();
     }
 }

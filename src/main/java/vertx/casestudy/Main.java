@@ -26,8 +26,8 @@ public class Main {
                 new DeploymentOptions().setInstances(3)
             )
             .subscribe(
-                deyploymentId -> log.info("Successfully deployed verticle(s) {}", deyploymentId),
-                error -> log.error("Failed to start verticle ", error)
+                deyploymentId -> log.info("Successfully deployed server(s) {}", deyploymentId),
+                error -> log.error("Failed to start server ", error)
             );
     }
 }
