@@ -22,9 +22,11 @@ public class DataVerticle extends AbstractVerticle {
 
     @Override
     public Completable rxStart() {
-        return vertx.eventBus()
+        final var headlineCreateCom =  vertx.eventBus()
             .<JsonObject>consumer(EventBusAddress.HEADLINE_CREATE)
             .handler(this.headlineCreateConsumer)
             .rxCompletionHandler();
+
+        return Completable.concatArray(headlineCreateCom);
     }
 }
