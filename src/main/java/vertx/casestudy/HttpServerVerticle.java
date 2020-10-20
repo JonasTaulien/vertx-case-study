@@ -2,6 +2,7 @@ package vertx.casestudy;
 
 import com.google.inject.Inject;
 import io.reactivex.Completable;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;

@@ -30,23 +30,25 @@ public class HeadlineGetAllHandler implements Handler<RoutingContext> {
               .rxExecute()
               .subscribe(
                   rowSet -> {
-                      final var headlines = new JsonArray();
-                      for (Row row : rowSet) {
-                          headlines.add(
-                              new JsonObject()
-                                  .put("id", row.getInteger("id"))
-                                  .put("author", row.getString("author"))
-                                  .put("source", row.getString("source"))
-                                  .put("title", row.getString("title"))
-                                  .put("description", row.getString("description"))
-                                  //Attention:
-                                  .put("publishedAt", row.getOffsetDateTime("publishedAt"))
-                          );
+                      try {
+                          final var headlines = new JsonArray();
+                          for (Row row : rowSet) {
+                              headlines.add(
+                                  new JsonObject()
+                                      .put("id", row.getInteger("id"))
+                                      .put("author", row.getString("author"))
+                                      .put("source", row.getString("source"))
+                                      .put("title", row.getString("title"))
+                                      .put("description", row.getString("description"))
+                                      .put("publishedAt", row.getOffsetDateTime("publishedAt").toString())
+                              );
+                          }
+                          ctx.response()
+                             .putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                             .end(headlines.encode());
+                      }catch (Throwable t){
+                          ctx.fail(t);
                       }
-
-                      ctx.response()
-                         .putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                         .end(headlines.encode());
                   },
                   ctx::fail
               );
