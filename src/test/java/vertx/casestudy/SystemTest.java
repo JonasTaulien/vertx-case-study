@@ -68,7 +68,7 @@ public class SystemTest {
             .put("source", "sz.de")
             .put("title", "Trump verliert US Wahl")
             .put("description", "Eine Beschreibung")
-            .put("pulishedAt", OffsetDateTime.of(2020, 11, 10, 8, 20, 0, 0, ZoneOffset.UTC).toString());
+            .put("publishedAt", OffsetDateTime.of(2020, 11, 10, 8, 20, 0, 0, ZoneOffset.UTC).toString());
 
         given(requestSpecification)
             .body(headline.encode())

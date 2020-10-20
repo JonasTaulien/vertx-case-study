@@ -8,5 +8,6 @@ public class HeadlineCreateHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext ctx) {
         final var body = ctx.getBodyAsJson();
+        ctx.response().end();
     }
 }
