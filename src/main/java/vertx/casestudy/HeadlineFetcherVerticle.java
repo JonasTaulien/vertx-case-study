@@ -33,16 +33,31 @@ public class HeadlineFetcherVerticle extends AbstractVerticle {
 
     @Override
     public Completable rxStart() {
-        this.vertx.setPeriodic(TimeUnit.MINUTES.toMillis(1), id -> fetchAndCreateHeadlines());
+        return this.configRetriever
+                   .rxGetConfig()
+                   .doOnSuccess(config -> {
+                       final var newsApiConfig = config.getJsonObject("newsapi");
+                       final var fetchIntervalInSeconds = newsApiConfig.getInteger("fetchIntervalInSeconds");
 
-        return Completable.complete();
+                       this.vertx
+                           .setPeriodic(
+                               TimeUnit.SECONDS.toMillis(fetchIntervalInSeconds),
+                               id -> fetchAndCreateHeadlines()
+                           );
+                   })
+                   .ignoreElement();
     }
 
 
 
     private void fetchAndCreateHeadlines() {
         this.fetchHeadlines()
-            .forEach(this::sendHeadline);
+            .doOnNext(this::sendHeadline)
+            .toList()
+            .subscribe(
+                headlines -> log.info("Send {} headlines", headlines.size()),
+                error -> log.error("Failed to send headlines", error)
+            );
     }
 
 

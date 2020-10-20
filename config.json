@@ -14,8 +14,10 @@
         "expiresInMinutes": 60
     },
     "newsapi": {
+        "fetchIntervalInSeconds": 30,
         "host": "newsapi.org",
         "port": 80,
+        // runtime-changeable
         "apiKey": "c0e401d649db42da8b2e7d13bd62f141",
         "country": "de",
         "category": "science",
