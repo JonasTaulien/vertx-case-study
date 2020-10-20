@@ -11,6 +11,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.pgclient.PgPool;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -22,6 +23,7 @@ import java.util.Arrays;
 
 import static io.restassured.RestAssured.given;
 import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 @ExtendWith(VertxExtension.class)
@@ -41,11 +43,15 @@ public class SystemTest {
 
         final var injector = Guice.createInjector(new Module(vertx));
 
-        vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class))
-             .subscribe(
-                 deploymentId -> ctx.completeNow(),
-                 ctx::failNow
-             );
+        final var pgPool = injector.getInstance(PgPool.class);
+
+        pgPool.query("TRUNCATE headline RESTART IDENTITY")
+              .rxExecute()
+              .flatMap(ros -> vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class)))
+              .subscribe(
+                  deploymentId -> ctx.completeNow(),
+                  ctx::failNow
+              );
     }
 
 
@@ -61,8 +67,10 @@ public class SystemTest {
             .body(equalTo(new JsonArray().encode()));
     }
 
+
+
     @Test
-    void getHeadlines(){
+    void getHeadlines() {
         final var headline = new JsonObject()
             .put("author", "Max Mustermann")
             .put("source", "sz.de")
@@ -77,12 +85,18 @@ public class SystemTest {
             .assertThat()
             .statusCode(201);
 
-        given(requestSpecification)
+        final var bodyAsString = given(requestSpecification)
             .get("/headlines")
             .then()
             .assertThat()
             .statusCode(200)
             .contentType(ContentType.JSON)
-            .body(equalTo(new JsonArray().add(headline.copy().put("id", 1).encode())));
+            .extract()
+            .body()
+            .asString();
+
+        final var body = new JsonArray(bodyAsString);
+
+        assertThat(body).isEqualTo(new JsonArray().add(headline.put("id", 1)));
     }
 }
