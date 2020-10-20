@@ -3,8 +3,8 @@ package vertx.casestudy.auth;
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.vertx.core.Handler;
-import io.vertx.ext.auth.PubSecKeyOptions;
-import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.JWTOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -15,11 +15,14 @@ public class LoginHandler implements Handler<RoutingContext> {
 
     private final PgPool pgPool;
 
+    private final JWTAuth jwtAuth;
+
 
 
     @Inject
-    public LoginHandler(PgPool pgPool) {
+    public LoginHandler(PgPool pgPool, JWTAuth jwtAuth) {
         this.pgPool = pgPool;
+        this.jwtAuth = jwtAuth;
     }
 
 
@@ -39,8 +42,7 @@ public class LoginHandler implements Handler<RoutingContext> {
 
                         if (loginSuccessful) {
                             final var userId = rowIterator.next().getInteger("id");
-                            // TODO: Generate token
-                            final var jwt = createToken(ctx.vertx(), userId);
+                            final var jwt = createToken(userId);
 
                             ctx.response()
                                .putHeader(HttpHeaderNames.CONTENT_TYPE, "application/jwt")
@@ -61,15 +63,13 @@ public class LoginHandler implements Handler<RoutingContext> {
 
 
 
-    private String createToken(Vertx vertx, int userId) {
-        final var jwtAuth = JWTAuth.create(
-            vertx,
-            new JWTAuthOptions().addPubSecKey(
-                new PubSecKeyOptions()
-                    .setAlgorithm("RS256")
-                    .setSecretKey("")
-                    .setPublicKey("")
-            )
+    private String createToken(int userId) {
+        return this.jwtAuth.generateToken(
+            new JsonObject(),
+            new JWTOptions()
+                .setExpiresInMinutes(60)
+                .setSubject(String.valueOf(userId))
+                .setAlgorithm("RS256")
         );
     }
 }

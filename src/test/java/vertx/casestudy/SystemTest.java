@@ -1,6 +1,7 @@
 package vertx.casestudy;
 
 import com.google.inject.Guice;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
@@ -89,6 +90,7 @@ public class SystemTest {
             .put("publishedAt", OffsetDateTime.of(2020, 11, 10, 8, 20, 0, 0, ZoneOffset.UTC).toString());
 
         given(requestSpecification)
+            .header(HttpHeaderNames.AUTHORIZATION.toString(), "Bearer " + getJwt())
             .body(headline.encode())
             .post("/headlines")
             .then()
@@ -114,8 +116,22 @@ public class SystemTest {
 
     @Test
     void login() {
+        final var jwt = getJwt();
 
-        final var jwt = given(this.requestSpecification)
+        final var decoder = Base64.getDecoder();
+
+        final String[] parts = jwt.split("\\.");
+        final var header = new JsonObject(new String(decoder.decode(parts[0])));
+        final var payload = new JsonObject(new String(decoder.decode(parts[1])));
+
+        assertThat(header.getString("typ")).isEqualTo("JWT");
+        assertThat(payload.getString("sub")).isEqualTo("1");
+    }
+
+
+
+    private String getJwt() {
+        return given(this.requestSpecification)
             .contentType(ContentType.JSON)
             .body(user.encode())
             .post("/login")
@@ -126,14 +142,5 @@ public class SystemTest {
             .extract()
             .body()
             .asString();
-
-        final var decoder = Base64.getDecoder();
-
-        final String[] parts = jwt.split("\\.");
-        final var header = new JsonObject(new String(decoder.decode(parts[0])));
-        final var payload = new JsonObject(new String(decoder.decode(parts[1])));
-
-        assertThat(header.getString("typ")).isEqualTo("JWT");
-        assertThat(payload.getString("sub")).isEqualTo("1");
     }
 }

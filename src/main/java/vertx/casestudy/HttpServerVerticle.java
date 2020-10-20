@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.handler.JWTAuthHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vertx.casestudy.auth.LoginHandler;
@@ -22,17 +23,21 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private final LoginHandler loginHandler;
 
+    private final JWTAuthHandler jwtAuthHandler;
+
 
 
     @Inject
     public HttpServerVerticle(
         HeadlineCreateHandler headlineCreateHandler,
         HeadlineGetAllHandler headlineGetAllHandler,
-        LoginHandler loginHandler
+        LoginHandler loginHandler,
+        JWTAuthHandler jwtAuthHandler
     ) {
         this.headlineCreateHandler = headlineCreateHandler;
         this.headlineGetAllHandler = headlineGetAllHandler;
         this.loginHandler = loginHandler;
+        this.jwtAuthHandler = jwtAuthHandler;
     }
 
 
@@ -58,7 +63,11 @@ public class HttpServerVerticle extends AbstractVerticle {
           });
 
         v1.get("/headlines").handler(this.headlineGetAllHandler);
-        v1.post("/headlines").handler(this.headlineCreateHandler);
+
+        v1.post("/headlines")
+          .handler(this.jwtAuthHandler)
+          .handler(this.headlineCreateHandler);
+
         v1.post("/login").handler(this.loginHandler);
 
         final var router = Router.router(vertx);
