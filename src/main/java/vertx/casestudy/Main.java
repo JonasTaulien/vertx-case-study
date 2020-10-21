@@ -17,7 +17,7 @@ public class Main {
             new MyFirstVerticle(),
             ar -> {
                 if (ar.succeeded()) {
-                    log.info("Successfully started my first verticle");
+                    log.info("Successfully started my first verticle!");
 
                 } else {
                     log.error("Failed to start my first verticle", ar.cause());
