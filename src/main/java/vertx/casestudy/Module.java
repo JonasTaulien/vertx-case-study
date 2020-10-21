@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.ext.web.client.WebClient;
 
 public class Module extends AbstractModule {
 
@@ -14,6 +15,7 @@ public class Module extends AbstractModule {
     public Module(Vertx vertx) {
         this.vertx = vertx;
     }
+
 
 
 

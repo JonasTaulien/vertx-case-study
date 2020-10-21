@@ -29,7 +29,7 @@ public class Main {
         vertx
             .rxDeployVerticle(
                 () -> injector.getInstance(MyFirstVerticle.class),
-                new DeploymentOptions().setInstances(5)
+                new DeploymentOptions().setInstances(1)
             )
             .subscribe(
                 deploymentId -> log.info("A Successfully started my first verticle: {}", deploymentId),
