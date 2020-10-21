@@ -15,7 +15,7 @@ public class SystemTest {
     @BeforeEach
     void prepare(Vertx vertx, VertxTestContext ctx) {
         vertx.deployVerticle(
-            new MyFirstVerticle(),
+            new MyFirstVerticle(asyncLogger),
             ctx.succeeding(id -> ctx.completeNow())
         );
     }

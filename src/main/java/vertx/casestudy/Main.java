@@ -1,8 +1,13 @@
 package vertx.casestudy;
 
+import com.google.inject.Guice;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.VertxOptions;
 import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 public class Main {
 
@@ -11,18 +16,24 @@ public class Main {
 
 
     public static void main(String[] args) {
-        final var vertx = Vertx.vertx();
-
-        vertx.deployVerticle(
-            new MyFirstVerticle(),
-            ar -> {
-                if (ar.succeeded()) {
-                    log.info("Successfully started my first verticle!");
-
-                } else {
-                    log.error("Failed to start my first verticle", ar.cause());
-                }
-            }
+        final Vertx vertx = Vertx.vertx(
+            new VertxOptions()
+                .setEventLoopPoolSize(4)
+                .setWorkerPoolSize(50)
+                .setMaxEventLoopExecuteTime(500)
+                .setMaxEventLoopExecuteTimeUnit(TimeUnit.MILLISECONDS)
         );
+
+        final var injector = Guice.createInjector(new Module(vertx));
+
+        vertx
+            .rxDeployVerticle(
+                () -> injector.getInstance(MyFirstVerticle.class),
+                new DeploymentOptions().setInstances(5)
+            )
+            .subscribe(
+                deploymentId -> log.info("A Successfully started my first verticle: {}", deploymentId),
+                error -> log.error("A Failed to start my first verticle", error)
+            );
     }
 }
