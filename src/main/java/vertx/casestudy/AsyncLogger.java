@@ -21,10 +21,26 @@ public class AsyncLogger {
 
 
     public void info(String message, Object... params) {
+        this.runAsync(
+            () -> log.info(message, params)
+        );
+    }
+
+
+
+    public void error(String message, Throwable t) {
+        this.runAsync(
+            () -> log.error(message, t)
+        );
+    }
+
+
+
+    private void runAsync(Runnable action) {
         this.vertx
             .rxExecuteBlocking(
                 promise -> {
-                    log.info(message, params);
+                    action.run();
                     promise.complete();
                 }
             )
