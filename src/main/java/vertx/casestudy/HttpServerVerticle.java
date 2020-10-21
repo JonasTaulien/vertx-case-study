@@ -76,6 +76,15 @@ public class HttpServerVerticle extends AbstractVerticle {
                      .end("[]");
               });
 
+        router.get("/api/v1/headlines/:id")
+              .handler(ctx -> {
+                  final var id = Integer.parseInt(ctx.pathParam("id"));
+
+                  ctx.response()
+                     .setStatusCode(200)
+                     .end("Your id: " + id);
+              });
+
         router.post("/api/v1/headlines")
               .handler(ctx -> {
                   final var body = ctx.getBodyAsJson();
