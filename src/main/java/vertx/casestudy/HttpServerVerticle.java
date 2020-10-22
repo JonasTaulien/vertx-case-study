@@ -26,6 +26,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     private final FailureHandler failureHandler;
 
 
+
     @Inject
     public HttpServerVerticle(
         AsyncLogger asyncLogger,
@@ -54,12 +55,14 @@ public class HttpServerVerticle extends AbstractVerticle {
               .handler(this.requestLoggingHandler)
               .failureHandler(this.failureHandler);
 
-        router.post().handler(BodyHandler.create());
+        router.post()
+              .handler(BodyHandler.create());
 
         final var v1 = Router.router(vertx);
         v1.get("/headlines").handler(this.headlineGetAllHandler);
         v1.get("/headlines/:id").handler(this.headlineGetOneHandler);
-        v1.post("/headlines").handler(this.headlineCreateHandler);
+        v1.post("/headlines")
+          .handler(this.headlineCreateHandler);
 
         router.mountSubRouter("/api/v1", v1);
 
