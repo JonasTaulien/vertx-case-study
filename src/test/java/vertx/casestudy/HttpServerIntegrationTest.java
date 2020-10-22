@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 @ExtendWith(VertxExtension.class)
-public class SystemTest {
+public class HttpServerIntegrationTest {
 
     private static final JsonObject USER = new JsonObject().put("email", "test@test.de").put("password", "secret");
 
@@ -47,32 +47,39 @@ public class SystemTest {
 
         final var injector = Guice.createInjector(new Module(vertx));
 
-        final var pgClient = injector.getInstance(PgPool.class);
-
-        pgClient.query("TRUNCATE headline RESTART IDENTITY")
-                .rxExecute()
-                .flatMap(
-                    rs -> pgClient.preparedQuery("INSERT INTO \"user\" (email, password) VALUES ($1, $2)")
-                                  .rxExecute(Tuple.of(USER.getString("email"), USER.getString("password")))
-                )
-                .flatMap(rs -> vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class)))
-                .subscribe(
-                    did -> ctx.completeNow(),
-                    ctx::failNow
-                );
+        vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class))
+             .subscribe(
+                 did -> ctx.completeNow(),
+                 ctx::failNow
+             );
     }
 
 
 
     @Test
-    void getHeadlinesIsEmpty() {
+    void getHeadlines(Vertx vertx) {
+        final var allHeadlines = new JsonArray()
+            .add(new JsonObject()
+                     .put("author", "Max Mustermann")
+                     .put("source", "sz.de")
+                     .put("title", "Trump verliert US Wahl")
+                     .put("description", "Die Republikaner weinen, die Welt lacht")
+                     .put("publishedAt", OffsetDateTime.of(2020, 11, 10, 8, 20, 0, 0, ZoneOffset.UTC).toString())
+            );
+
+        vertx.eventBus()
+            .<JsonObject>consumer("headline.getAll", msg -> {
+                assertThat(msg.body()).isEqualTo(new JsonObject());
+                msg.reply(allHeadlines);
+            });
+
         given(this.requestSpecification)
             .get("/headlines")
             .then()
             .assertThat()
             .statusCode(200)
             .contentType(ContentType.JSON)
-            .body(equalTo(new JsonArray().encode()));
+            .body(equalTo(allHeadlines.encode()));
     }
 
 
