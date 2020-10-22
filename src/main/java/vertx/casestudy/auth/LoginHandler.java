@@ -39,38 +39,35 @@ public class LoginHandler implements Handler<RoutingContext> {
         this.client
             .preparedQuery("SELECT id FROM \"user\" WHERE email = $1 AND password = $2")
             .rxExecute(Tuple.of(email, password))
+            .filter(rowSet -> rowSet.iterator().hasNext())
+            .map(rowSet -> rowSet.iterator().next().getInteger("id"))
+            .flatMap(
+                _userId -> this.configRetriever
+                    .rxGetConfig()
+                    .map(config -> config.getJsonObject("jwt"))
+                    .map(_jwtConfig -> new Object() {
+                        final JsonObject jwtConfig = _jwtConfig;
+
+                        final int userId = _userId;
+                    })
+                    .toMaybe()
+            )
+            .map(
+                data -> this.jwtAuth.generateToken(
+                    new JsonObject(),
+                    new JWTOptions()
+                        .setExpiresInMinutes(data.jwtConfig.getInteger("expiresInMinutes"))
+                        .setSubject(String.valueOf(data.userId))
+                        .setAlgorithm(data.jwtConfig.getString("algorithm"))
+                )
+            )
             .subscribe(
-                rowSet -> {
-                    final var loginSuccessful = rowSet.iterator().hasNext();
-                    if (loginSuccessful) {
-                        final var userId = rowSet.iterator().next().getInteger("id");
-
-                        this.configRetriever
-                            .rxGetConfig()
-                            .map(config -> config.getJsonObject("jwt"))
-                            .subscribe(
-                                jwtConfig -> {
-                                    final var token = this.jwtAuth.generateToken(
-                                        new JsonObject(),
-                                        new JWTOptions()
-                                            .setExpiresInMinutes(jwtConfig.getInteger("expiresInMinutes"))
-                                            .setSubject(String.valueOf(userId))
-                                            .setAlgorithm(jwtConfig.getString("algorithm"))
-                                    );
-
-                                    ctx.response()
-                                       .setStatusCode(200)
-                                       .putHeader("Content-Type", "application/jwt")
-                                       .end(token);
-                                },
-                                ctx::fail
-                            );
-
-                    } else {
-                        ctx.fail(401, new Exception("Invalid email or password"));
-                    }
-                },
-                ctx::fail
+                token -> ctx.response()
+                            .setStatusCode(200)
+                            .putHeader("Content-Type", "application/jwt")
+                            .end(token),
+                ctx::fail,
+                () -> ctx.fail(401, new Exception("Invalid email or password"))
             );
     }
 }
