@@ -112,6 +112,7 @@ public class Module extends AbstractModule {
                         .setType("file")
                         .setConfig(new JsonObject().put("path", "config.json"))
                 )
+                .setScanPeriod(3000)
         );
     }
 }

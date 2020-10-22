@@ -1,7 +1,9 @@
 package vertx.casestudy;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.reactivex.Completable;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
@@ -31,6 +33,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private final JWTAuthHandler jwtAuthHandler;
 
+    private final JsonObject config;
 
 
     @Inject
@@ -42,7 +45,8 @@ public class HttpServerVerticle extends AbstractVerticle {
         RequestLoggingHandler requestLoggingHandler,
         FailureHandler failureHandler,
         LoginHandler loginHandler,
-        JWTAuthHandler jwtAuthHandler
+        JWTAuthHandler jwtAuthHandler,
+        @Named("config") JsonObject config
     ) {
         this.asyncLogger = asyncLogger;
         this.headlineGetAllHandler = headlineGetAllHandler;
@@ -52,6 +56,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         this.failureHandler = failureHandler;
         this.loginHandler = loginHandler;
         this.jwtAuthHandler = jwtAuthHandler;
+        this.config = config;
     }
 
 
@@ -81,7 +86,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         return this.vertx
             .createHttpServer()
             .requestHandler(router)
-            .rxListen(8080)
+            .rxListen(this.config.getInteger("port"))
             .ignoreElement();
     }
 }

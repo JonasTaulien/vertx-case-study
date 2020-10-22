@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
+import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.pgclient.PgPool;
@@ -15,12 +16,15 @@ public class LoginHandler implements Handler<RoutingContext> {
 
     private final JWTAuth jwtAuth;
 
+    private final ConfigRetriever configRetriever;
+
 
 
     @Inject
-    public LoginHandler(PgPool client, JWTAuth jwtAuth) {
+    public LoginHandler(PgPool client, JWTAuth jwtAuth, ConfigRetriever configRetriever) {
         this.client = client;
         this.jwtAuth = jwtAuth;
+        this.configRetriever = configRetriever;
     }
 
 
@@ -41,18 +45,26 @@ public class LoginHandler implements Handler<RoutingContext> {
                     if (loginSuccessful) {
                         final var userId = rowSet.iterator().next().getInteger("id");
 
-                        final var token = this.jwtAuth.generateToken(
-                            new JsonObject(),
-                            new JWTOptions()
-                                .setExpiresInMinutes(60)
-                                .setSubject(String.valueOf(userId))
-                                .setAlgorithm("RS256")
-                        );
+                        this.configRetriever
+                            .rxGetConfig()
+                            .map(config -> config.getJsonObject("jwt"))
+                            .subscribe(
+                                jwtConfig -> {
+                                    final var token = this.jwtAuth.generateToken(
+                                        new JsonObject(),
+                                        new JWTOptions()
+                                            .setExpiresInMinutes(jwtConfig.getInteger("expiresInMinutes"))
+                                            .setSubject(String.valueOf(userId))
+                                            .setAlgorithm(jwtConfig.getString("algorithm"))
+                                    );
 
-                        ctx.response()
-                           .setStatusCode(200)
-                           .putHeader("Content-Type", "application/jwt")
-                           .end(token);
+                                    ctx.response()
+                                       .setStatusCode(200)
+                                       .putHeader("Content-Type", "application/jwt")
+                                       .end(token);
+                                },
+                                ctx::fail
+                            );
 
                     } else {
                         ctx.fail(401, new Exception("Invalid email or password"));
