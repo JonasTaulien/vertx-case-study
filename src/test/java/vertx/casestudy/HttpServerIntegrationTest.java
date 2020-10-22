@@ -30,6 +30,8 @@ public class HttpServerIntegrationTest {
 
     private static final JsonObject USER = new JsonObject().put("email", "test@test.de").put("password", "secret");
 
+    private static final String TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2MDMzNzUxODIsImV4cCI6MTkxODczNTE4Miwic3ViIjoiMSJ9.n2BO_gbGNtNO0v-Cp9ddsr91XWgaZ-nl_xrWi3ZDk2_lfMYT4ty8gf40Y0Om2CgMWzb1qnIQjUCx3xtxvqX5LG43_aIdr1erTvWM2_tx9HADDJ3_-fx3GO6OfQ0o3b6SvG8c2BXSS9FkLkyW7xfVPiha29wNc4Z3PSVzfXkghd5UOPJZK9wlbrNGBxzLedBAnMCTeex4MagpDKe-CV-ddbUuo2vO0OynPzd4hbh9O6jGrxzflcYUaJuEsVQfCMHomK-wd2humlSrkAy4vUoIsaXn0Yy6VyTtx7SlTDAm2trINvrmM9PIF9inPtXpBxhTHMXVTMxp2SEhK02QLiznIw";
+
     private RequestSpecification requestSpecification;
 
 
@@ -93,21 +95,9 @@ public class HttpServerIntegrationTest {
             .put("description", "Die Republikaner weinen, die Welt lacht")
             .put("publishedAt", OffsetDateTime.of(2020, 11, 10, 8, 20, 0, 0, ZoneOffset.UTC).toString());
 
-        final var token = given(this.requestSpecification)
-            .contentType(ContentType.JSON)
-            .body(USER.encode())
-            .post("/login")
-            .then()
-            .assertThat()
-            .statusCode(200)
-            .contentType("application/jwt")
-            .extract()
-            .body()
-            .asString();
-
         final var body = given(this.requestSpecification)
             .body(headline.encode())
-            .header("Authorization", "Bearer " + token)
+            .header("Authorization", "Bearer " + TOKEN)
             .post("/headlines")
             .then()
             .assertThat()
