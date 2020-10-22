@@ -3,9 +3,13 @@ package vertx.casestudy;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import io.vertx.config.ConfigRetrieverOptions;
+import io.vertx.config.ConfigStoreOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.jwt.JWTAuth;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -75,5 +79,21 @@ public class Module extends AbstractModule {
     @Singleton
     JWTAuthHandler provideJWTAuthHandler(JWTAuth jwtAuth) {
         return JWTAuthHandler.create(jwtAuth);
+    }
+
+
+
+    @Provides
+    @Singleton
+    ConfigRetriever provideConfigRetriever() {
+        return ConfigRetriever.create(
+            this.vertx,
+            new ConfigRetrieverOptions()
+                .addStore(
+                    new ConfigStoreOptions()
+                        .setType("file")
+                        .setConfig(new JsonObject().put("path", "config.json"))
+                )
+        );
     }
 }
