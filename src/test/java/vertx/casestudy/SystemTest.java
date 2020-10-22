@@ -11,6 +11,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.pgclient.PgPool;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -42,11 +43,15 @@ public class SystemTest {
 
         final var injector = Guice.createInjector(new Module(vertx));
 
-        vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class))
-             .subscribe(
-                 did -> ctx.completeNow(),
-                 ctx::failNow
-             );
+        final var pgClient = injector.getInstance(PgPool.class);
+
+        pgClient.query("TRUNCATE headline RESTART IDENTITY")
+                .rxExecute()
+                .flatMap(rs -> vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class)))
+                .subscribe(
+                    did -> ctx.completeNow(),
+                    ctx::failNow
+                );
     }
 
 
@@ -71,8 +76,8 @@ public class SystemTest {
             .put("source", "sz.de")
             .put("title", "Trump verliert US Wahl")
             .put("description", "Die Republikaner weinen, die Welt lacht")
-            .put("publishedAt", OffsetDateTime.of(2020, 11, 10, 8, 20, 0, 0, ZoneOffset.UTC).toString()
-            );
+            .put("publishedAt", OffsetDateTime.of(2020, 11, 10, 8, 20, 0, 0, ZoneOffset.UTC).toString());
+
         final var body = given(this.requestSpecification)
             .body(headline.encode())
             .post("/headlines")
