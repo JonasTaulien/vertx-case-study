@@ -5,7 +5,8 @@
         "host": "localhost",
         "database": "case-study",
         "user": "example",
-        "password": "example"
+        "password": "example",
+        "poolSize": 10
     },
     "jwt": {
         "algorithm": "RS256",
