@@ -12,6 +12,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.pgclient.PgPool;
+import io.vertx.reactivex.sqlclient.Tuple;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -25,6 +26,8 @@ import static org.hamcrest.Matchers.equalTo;
 
 @ExtendWith(VertxExtension.class)
 public class SystemTest {
+
+    private static final JsonObject USER = new JsonObject().put("email", "test@test.de").put("password", "secret");
 
     private RequestSpecification requestSpecification;
 
@@ -47,6 +50,10 @@ public class SystemTest {
 
         pgClient.query("TRUNCATE headline RESTART IDENTITY")
                 .rxExecute()
+                .flatMap(
+                    rs -> pgClient.preparedQuery("INSERT INTO \"user\" (email, password) VALUES ($1, $2)")
+                                  .rxExecute(Tuple.of(USER.getString("email"), USER.getString("password")))
+                )
                 .flatMap(rs -> vertx.rxDeployVerticle(injector.getInstance(HttpServerVerticle.class)))
                 .subscribe(
                     did -> ctx.completeNow(),
@@ -78,8 +85,21 @@ public class SystemTest {
             .put("description", "Die Republikaner weinen, die Welt lacht")
             .put("publishedAt", OffsetDateTime.of(2020, 11, 10, 8, 20, 0, 0, ZoneOffset.UTC).toString());
 
+        final var token = given(this.requestSpecification)
+            .contentType(ContentType.JSON)
+            .body(USER.encode())
+            .post("/login")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .contentType("application/jwt")
+            .extract()
+            .body()
+            .asString();
+
         final var body = given(this.requestSpecification)
             .body(headline.encode())
+            .header("Authorization", "Bearer " + token)
             .post("/headlines")
             .then()
             .assertThat()

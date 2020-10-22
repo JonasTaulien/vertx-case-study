@@ -5,6 +5,8 @@ import io.reactivex.Completable;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.handler.JWTAuthHandler;
+import vertx.casestudy.auth.LoginHandler;
 import vertx.casestudy.headline.HeadlineCreateHandler;
 import vertx.casestudy.headline.HeadlineGetAllHandler;
 import vertx.casestudy.headline.HeadlineGetOneHandler;
@@ -25,6 +27,10 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private final FailureHandler failureHandler;
 
+    private final LoginHandler loginHandler;
+
+    private final JWTAuthHandler jwtAuthHandler;
+
 
 
     @Inject
@@ -34,7 +40,9 @@ public class HttpServerVerticle extends AbstractVerticle {
         HeadlineGetOneHandler headlineGetOneHandler,
         HeadlineCreateHandler headlineCreateHandler,
         RequestLoggingHandler requestLoggingHandler,
-        FailureHandler failureHandler
+        FailureHandler failureHandler,
+        LoginHandler loginHandler,
+        JWTAuthHandler jwtAuthHandler
     ) {
         this.asyncLogger = asyncLogger;
         this.headlineGetAllHandler = headlineGetAllHandler;
@@ -42,6 +50,8 @@ public class HttpServerVerticle extends AbstractVerticle {
         this.headlineCreateHandler = headlineCreateHandler;
         this.requestLoggingHandler = requestLoggingHandler;
         this.failureHandler = failureHandler;
+        this.loginHandler = loginHandler;
+        this.jwtAuthHandler = jwtAuthHandler;
     }
 
 
@@ -59,9 +69,11 @@ public class HttpServerVerticle extends AbstractVerticle {
               .handler(BodyHandler.create());
 
         final var v1 = Router.router(vertx);
+        v1.post("/login").handler(this.loginHandler);
         v1.get("/headlines").handler(this.headlineGetAllHandler);
         v1.get("/headlines/:id").handler(this.headlineGetOneHandler);
         v1.post("/headlines")
+          .handler(this.jwtAuthHandler)
           .handler(this.headlineCreateHandler);
 
         router.mountSubRouter("/api/v1", v1);
