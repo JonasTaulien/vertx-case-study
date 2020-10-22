@@ -7,6 +7,7 @@ import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vertx.casestudy.data.DataStoreVerticle;
+import vertx.casestudy.fetcher.FetcherVerticle;
 import vertx.casestudy.http.HttpServerVerticle;
 
 import java.util.concurrent.TimeUnit;
@@ -46,6 +47,16 @@ public class Main {
             .subscribe(
                 deploymentId -> log.info("A Successfully started data store: {}", deploymentId),
                 error -> log.error("A Failed to start data store", error)
+            );
+
+        vertx
+            .rxDeployVerticle(
+                () -> injector.getInstance(FetcherVerticle.class),
+                new DeploymentOptions().setInstances(1)
+            )
+            .subscribe(
+                deploymentId -> log.info("A Successfully started fetcher: {}", deploymentId),
+                error -> log.error("A Failed to start fetcher", error)
             );
     }
 }
