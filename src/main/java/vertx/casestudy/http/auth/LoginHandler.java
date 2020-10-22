@@ -1,4 +1,4 @@
-package vertx.casestudy.auth;
+package vertx.casestudy.http.auth;
 
 import com.google.inject.Inject;
 import io.vertx.core.Handler;

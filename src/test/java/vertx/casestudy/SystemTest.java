@@ -15,6 +15,7 @@ import io.vertx.reactivex.pgclient.PgPool;
 import io.vertx.reactivex.sqlclient.Tuple;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import vertx.casestudy.http.HttpServerVerticle;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

@@ -1,4 +1,4 @@
-package vertx.casestudy.log;
+package vertx.casestudy;
 
 import com.google.inject.Inject;
 import io.vertx.reactivex.core.Vertx;

@@ -1,4 +1,4 @@
-package vertx.casestudy.headline;
+package vertx.casestudy.http.headline;
 
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpHeaderNames;

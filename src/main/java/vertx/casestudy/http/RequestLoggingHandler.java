@@ -1,8 +1,9 @@
-package vertx.casestudy.log;
+package vertx.casestudy.http;
 
 import com.google.inject.Inject;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import vertx.casestudy.AsyncLogger;
 
 public class RequestLoggingHandler implements Handler<RoutingContext> {
 

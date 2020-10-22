@@ -1,4 +1,4 @@
-package vertx.casestudy;
+package vertx.casestudy.http;
 
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -6,7 +6,7 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import vertx.casestudy.log.AsyncLogger;
+import vertx.casestudy.AsyncLogger;
 
 public class FailureHandler implements Handler<RoutingContext> {
 

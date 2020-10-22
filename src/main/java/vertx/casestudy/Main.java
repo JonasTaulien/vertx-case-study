@@ -6,6 +6,8 @@ import io.vertx.core.VertxOptions;
 import io.vertx.reactivex.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vertx.casestudy.data.DataStoreVerticle;
+import vertx.casestudy.http.HttpServerVerticle;
 
 import java.util.concurrent.TimeUnit;
 
@@ -32,8 +34,18 @@ public class Main {
                 new DeploymentOptions().setInstances(4)
             )
             .subscribe(
-                deploymentId -> log.info("A Successfully started my first verticle: {}", deploymentId),
-                error -> log.error("A Failed to start my first verticle", error)
+                deploymentId -> log.info("A Successfully started http server: {}", deploymentId),
+                error -> log.error("A Failed to start http server", error)
+            );
+
+        vertx
+            .rxDeployVerticle(
+                () -> injector.getInstance(DataStoreVerticle.class),
+                new DeploymentOptions().setInstances(2)
+            )
+            .subscribe(
+                deploymentId -> log.info("A Successfully started data store: {}", deploymentId),
+                error -> log.error("A Failed to start data store", error)
             );
     }
 }

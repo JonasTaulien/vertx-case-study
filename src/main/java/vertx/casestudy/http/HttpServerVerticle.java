@@ -1,4 +1,4 @@
-package vertx.casestudy;
+package vertx.casestudy.http;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -8,20 +8,16 @@ import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import io.vertx.reactivex.ext.web.handler.JWTAuthHandler;
-import vertx.casestudy.auth.LoginHandler;
-import vertx.casestudy.headline.HeadlineCreateHandler;
-import vertx.casestudy.headline.HeadlineGetAllHandler;
-import vertx.casestudy.headline.HeadlineGetOneHandler;
-import vertx.casestudy.log.AsyncLogger;
-import vertx.casestudy.log.RequestLoggingHandler;
+import vertx.casestudy.http.auth.LoginHandler;
+import vertx.casestudy.http.headline.HeadlineCreateHandler;
+import vertx.casestudy.http.headline.HeadlineGetAllHandler;
+import vertx.casestudy.AsyncLogger;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
     private final AsyncLogger asyncLogger;
 
     private final HeadlineGetAllHandler headlineGetAllHandler;
-
-    private final HeadlineGetOneHandler headlineGetOneHandler;
 
     private final HeadlineCreateHandler headlineCreateHandler;
 
@@ -40,7 +36,6 @@ public class HttpServerVerticle extends AbstractVerticle {
     public HttpServerVerticle(
         AsyncLogger asyncLogger,
         HeadlineGetAllHandler headlineGetAllHandler,
-        HeadlineGetOneHandler headlineGetOneHandler,
         HeadlineCreateHandler headlineCreateHandler,
         RequestLoggingHandler requestLoggingHandler,
         FailureHandler failureHandler,
@@ -50,7 +45,6 @@ public class HttpServerVerticle extends AbstractVerticle {
     ) {
         this.asyncLogger = asyncLogger;
         this.headlineGetAllHandler = headlineGetAllHandler;
-        this.headlineGetOneHandler = headlineGetOneHandler;
         this.headlineCreateHandler = headlineCreateHandler;
         this.requestLoggingHandler = requestLoggingHandler;
         this.failureHandler = failureHandler;
@@ -76,7 +70,6 @@ public class HttpServerVerticle extends AbstractVerticle {
         final var v1 = Router.router(vertx);
         v1.post("/login").handler(this.loginHandler);
         v1.get("/headlines").handler(this.headlineGetAllHandler);
-        v1.get("/headlines/:id").handler(this.headlineGetOneHandler);
         v1.post("/headlines")
           .handler(this.jwtAuthHandler)
           .handler(this.headlineCreateHandler);
