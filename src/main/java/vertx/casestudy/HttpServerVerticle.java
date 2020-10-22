@@ -1,31 +1,46 @@
 package vertx.casestudy;
 
 import com.google.inject.Inject;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
 import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import io.vertx.core.Promise;
-import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import vertx.casestudy.headline.HeadlineCreateHandler;
+import vertx.casestudy.headline.HeadlineGetAllHandler;
+import vertx.casestudy.headline.HeadlineGetOneHandler;
+import vertx.casestudy.log.AsyncLogger;
+import vertx.casestudy.log.RequestLoggingHandler;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
     private final AsyncLogger asyncLogger;
 
+    private final HeadlineGetAllHandler headlineGetAllHandler;
+
+    private final HeadlineGetOneHandler headlineGetOneHandler;
+
+    private final HeadlineCreateHandler headlineCreateHandler;
+
+    private final RequestLoggingHandler requestLoggingHandler;
+
+    private final FailureHandler failureHandler;
 
 
     @Inject
-    public HttpServerVerticle(AsyncLogger asyncLogger) {
+    public HttpServerVerticle(
+        AsyncLogger asyncLogger,
+        HeadlineGetAllHandler headlineGetAllHandler,
+        HeadlineGetOneHandler headlineGetOneHandler,
+        HeadlineCreateHandler headlineCreateHandler,
+        RequestLoggingHandler requestLoggingHandler,
+        FailureHandler failureHandler
+    ) {
         this.asyncLogger = asyncLogger;
+        this.headlineGetAllHandler = headlineGetAllHandler;
+        this.headlineGetOneHandler = headlineGetOneHandler;
+        this.headlineCreateHandler = headlineCreateHandler;
+        this.requestLoggingHandler = requestLoggingHandler;
+        this.failureHandler = failureHandler;
     }
 
 
@@ -35,64 +50,18 @@ public class HttpServerVerticle extends AbstractVerticle {
         this.asyncLogger.info("Starting http server");
 
         final var router = Router.router(vertx);
-
         router.route()
-              .handler(ctx -> {
-                  this.asyncLogger.info(
-                      "New Request {} {}",
-                      ctx.request().method(),
-                      ctx.request().path()
-                  );
+              .handler(this.requestLoggingHandler)
+              .failureHandler(this.failureHandler);
 
-                  ctx.next();
-              })
-              .failureHandler(
-                  ctx -> {
-                      this.asyncLogger.error("Error", ctx.failure());
+        router.post().handler(BodyHandler.create());
 
-                      final var message = (ctx.failure() != null)
-                          ? ctx.failure().getMessage()
-                          : "Something went wrong";
+        final var v1 = Router.router(vertx);
+        v1.get("/headlines").handler(this.headlineGetAllHandler);
+        v1.get("/headlines/:id").handler(this.headlineGetOneHandler);
+        v1.post("/headlines").handler(this.headlineCreateHandler);
 
-                      ctx.response()
-                         .setStatusCode(ctx.statusCode())
-                         .putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                         .end(
-                             new JsonObject()
-                                 .put("error", message)
-                                 .encode()
-                         );
-                  }
-              );
-
-        router.post()
-              .handler(BodyHandler.create());
-
-        router.get("/api/v1/headlines")
-              .handler(ctx -> {
-                  ctx.response()
-                     .setStatusCode(200)
-                     .putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                     .end("[]");
-              });
-
-        router.get("/api/v1/headlines/:id")
-              .handler(ctx -> {
-                  final var id = Integer.parseInt(ctx.pathParam("id"));
-
-                  ctx.response()
-                     .setStatusCode(200)
-                     .end("Your id: " + id);
-              });
-
-        router.post("/api/v1/headlines")
-              .handler(ctx -> {
-                  final var body = ctx.getBodyAsJson();
-                  ctx.response()
-                     .setStatusCode(201)
-                     .putHeader(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                     .end(body.put("id", 1).encode());
-              });
+        router.mountSubRouter("/api/v1", v1);
 
         return this.vertx
             .createHttpServer()
